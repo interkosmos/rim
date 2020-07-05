@@ -1,0 +1,3599 @@
+                RIM-5 Manual
+                DEFINITIONS
+
+ATTRIBUTE:      An attribute is a 1-8 character alphanumeric name
+                used to identify a specific column of a relation.
+
+DOMAIN:         A domain is the set of values which are permissible
+                in a column of a two-dimensional table of data
+                (relation).
+
+KEY:            An attribute may be specified to be "KEY".  This
+                specification will cause RIM to build an index for
+                the attribute.  Under certain conditions, this
+                index will greatly improve the system efficiency
+                for queries and updates.
+
+RELATION:       A relation is a two-dimensional table of data.  The
+                column headings are the attributes of the relation
+                and the rows are the data occurences (tuples).
+
+ROW:            A row is the set of values in a row of a two-
+                dimensional table (relation).  A row is sometimes
+                referred to as a tuple.
+
+SCHEMA:         The schema is the definition of the relations and
+                their attributes that comprise the data base.  The
+                relation passwords and constraint rules also are
+                part of the schema.
+
+
+
+
+
+                 SUMMARY
+
+
+
+This document is the user's guide (VAX/VMS) for the Relational
+Information Management System, Version 5 (RIM-5).  The information
+presented consists of instructions for using RIM-5 as a standalone
+system and for using RIM-5 in conjunction with an application
+program.
+
+Section 1.0 presents the method of implementation and access for
+RIM-5, a discussion of the files used by RIM-5, and the general
+syntax of the RIM-5 command language.
+
+Section 2.0 presents instructions for the use of RIM-5 as a
+standalone system in both menu and command modes.  In the menu
+mode, you are prompted for the inputs required to create, update,
+and/or query the data base.  The command mode, as an alternative,
+requires the direct input of RIM-5 commands to create, update,
+and/or query the data base.  A discussion of all the available
+RIM-5 command is presented in this section.
+
+Section 3.0 presents the instructions for the application program
+interface.  Any programming language that can call FORTRAN
+subroutines can be used.
+
+The appendices present a summary of the RIM-5 commands, a summary
+of the application program interface, a sample RIM FORTRAN
+program, a list of the current limitations, and a discussion of
+the LXLREC free field input routine.
+
+
+
+
+
+            1.0  OVERVIEW
+
+The Relational Information Management (RIM) System was originally
+developed as a prototype data base management system by Dennis L.
+Comfort and Wayne J. Erickson at The Boeing  Company under NASA
+Contract NAS1-14700 (IPAD).  Mr. Erickson at the University of
+Washington, and Frederick P. Gray at The Boeing Company made en-
+hancements to the system which culminated in RIM Version 4 (RIM-
+4) . RIM-5, which is the version of RIM described in this
+document, was developed by Mr. Erickson for NASA and Mr. Gray and
+Geofferey Von Limbach for Boeing.  RIM is based upon the relational
+algebra model for data management and has been used for both en-
+gineering and business data.  The system is available as a stand-
+alone system and through an application program interface.  The
+standalone system may be executed in two modes: menu or command.
+The menu mode prompts the user for the input required to create,
+update, and/or query the data base.  The command mode requires the
+direct input of RIM commands.
+
+
+RIM-5 includes several enhancements relative to RIM-4, including:
+
+     .   highly portable FORTAN code
+
+     .   additional scientific attribute types for vectors and
+         matrices
+
+     .   variable length attributes
+
+     .   improved sort option
+
+     .   improved where clause
+
+     .   an initial set of report writing commands
+
+     .   introduction of tolerance for floating point numbers
+
+     .   additional schema modification commands
+
+     .   enhanced FORTAN interface
+
+     .   RIM-to-RIM communications file
+
+To the interactive/batch user the RIM-5 creation, update, and
+query are, for the most part, identical to RIM-4.  Data bases form
+RIM-4 must be reloaded for RIM-5, however.  In addition, the ap-
+plication program interface has been expanded and modified to ac-
+comodate increased capabilities.
+
+
+
+1.1  IMPLEMENTATION AND ACCESS
+
+RIM is written entirely in FORTRAN 77.  It requires approximately
+300000 (decimal) bytes of virtual memory when run as a standalone
+program.
+
+Access to RIM depends on the execution method desired.  To execute
+the standalone system, the following control statement is needed:
+
+     RUN  [rimact ]RIM
+
+where rimact is the name of the user directory on which RIMABS and
+the RIM HELP data base files reside.
+
+To use the RIM application program interface you need to link
+RIMLIB to your application program.  This can be done with the
+following instruction:
+
+     LINK JOBA,[rimact]RIMLIB/LIB
+
+where rimact is the name of the user directory on which RIMLIB
+resides.  JOBA is the name of the object file of your application
+program.
+
+
+1.2 DATA BASE FILES
+
+Each data base consists of three RIM-generated files whose logical
+names are formed by suffixing the data base name with a 1,2, and
+3.  The first file contains directory data, the second file con-
+tains the actual data for each relation, and the third file con-
+tains key element pointers.  The default type for these files are
+"DAT".  RIM uses logical files FOR005 and FOR006 for input and
+output.
+
+If your data base files do not reside on your directory with names
+equal to the logical data base files names, you must use the as-
+sign control statements prior to the RIM execution to assign
+required names to your data base files.  You may also assign your
+input and outout files to files other than FOR005 and FOR006  if
+desired. (INPUT and OUTPUT commands.)
+
+1.3 GENERAL COMMAND SYNTAX
+
+RIM is used by entering commands, (which start with keywords) in
+response to input prompts (which vary according to the submodule
+in use).  Three of the commands (DEFINE, HELP, and LOAD), are used
+to enter submodules which have their own sets of commands for
+defining and loading a data base.  In describing commands, the
+following conventions are used:
+
+      relname
+         or                 name of a relation(s)
+      relname1,relname2,...
+
+      attname
+         or             name of an attribute(s)
+      attname1,attname2,...
+
+      value
+         or         actual values(s)
+      value1,value2,...     (value may be a text string,
+                scalar, vector, or matrix)
+
+All relation and attribute names must contain at least 1 and no
+more than 8 alphanumeric characters.
+
+Many of the commands in RIM have optional parts.  These optional
+parts are enclosed in square brackets.
+
+      [THIS IS OPTIONAL]
+
+Some keywords in the commands are selected from a list of accep-
+table keywords.  These keywords are in a vertical list with the
+first choice enclosed in braces.
+
+      {CHOOSE}
+       ONE
+       OF
+       THESE
+
+RIM command keywords may be abbreviated.  At least the first
+3 characters in the keywords are required.
+
+The following are equivalent:
+
+    1)   SELECT, SELEC, SEL
+
+    2)   INTERSECT, INTER, INT
+
+    3)   DELETE DUPLICATES, DEL DUPLICATES, DEL DUP
+
+All commands in RIM are entered in a free-field format with blanks
+and commas as separators.  the following contains a short descrip-
+tion of RIM conventions and data generation facilities.  An exten-
+sive description, intended for the experienced RIM user, can be
+found in Appendix E.
+
+Keywords and data values are separated by blanks or commas.  If a
+command is too long for one 80 character line, it may be continued
+on succeeding lines by entering "+" as the last character of the
+preceding line.  RIM remembers each previous command.  This en-
+ables you to re-use all or part of the previous command.  This is
+done by using an asterisk to indicate which items of the previous
+
+
+command are to be re-used.  A single asterisk means re-use the
+corresponding  single item of the previous record.  An asterisk
+followed by a number n means re-use the next n corresponding
+items.  Two asterisks mean re-use all remaining corresponding
+items.
+
+
+The following are all equivalent:
+
+    1)  THIS IS A COMMAND
+
+    2)  THIS +
+        IS +
+        A +
+        COMMAND
+
+    3)  * IS,A COMMAND
+
+    4)  THIS *2 COMMAND
+
+    5)  THIS **
+
+Multiple commands may be entered on one line separated by a semi-
+colon or $.
+
+    THIS IS THE FIRST ; THIS IS THE SECOND $ THIS IS THE THIRD
+
+Comments may be placed anywhere within a command by enclosing the
+comment between the characters *( and ).
+
+    *(THIS IS A COMMENT)  THIS IS NOT
+
+When numeric data is to be interpreted as text (alphanumeric)
+data, the numerals must be enclosed by quotation marks.
+
+    "1234"
+
+When entering text strings which contain embedded blanks or
+commas, the entire string must be enclosed by quotation marks.
+
+    "THIS IS A TEXT STRING"
+
+
+When entering a text string that contains an item enclosed by
+quotation marks, double quotation marks are used.
+
+  "THERE IS A ""QUOTE"" IN THIS STRING"
+
+A text string may require continuation on one or more lines.  The
++ sign continuation can then be used within the quotation marks.
+It is not recommended that you use leading blanks in text strings.
+Text which does not have embedded blanks or commas does not
+require quotes.
+
+Integer data is input as a string of digits without a decimal
+point.  A sign may precede the digits.
+
+    123, -63, +56, 0
+
+
+
+Real or floating point numbers must include a decimal point or E
+for the exponent.  If a decimal point is not present, the E must
+be preceded by an integer.
+
+    1.3, .005, 0., 6.E-1, 6E-1, 0.60, -23.45
+
+The size of real numbers is limited to the range between 1.0E-38
+and 1.0E+38.
+
+
+
+     2.0  RIM EXECUTION
+
+
+Execution of RIM as a standalone program can be effective in two
+modes, command mode or menu mode.  The command mode is used when
+RIM is executed in the batch environment or for interactive users
+who wish to bypass the menu dialogue.  A detailed description of
+the commands are given in section 2.1.  The menu mode offers as-
+sistance to inexperienced users.  An overview of this mode is
+discussed in section 2.2 and a more detailed description of the
+menu mode dialogue is given in section 2.3.  The interactive user
+may switch freely between menu mode and command mode.
+
+When executing RIM interactively, the first output to your display
+will be:
+
+     BEGIN RIM ---- VAX VERSION 5.0  UDXX      YY/MM/DD  HH.MM.SS
+
+     RIM COMMAND MODE
+     ENTER "MENU" FOR MENU MODE
+
+UDXX identifies the update level of RIM.  The date and time stamp
+indicate current date and time.  At the start of execution you
+are in the command mode but you may switch immediately to the menu
+mode as indicated. Note that Amiga or Unix or MSDOS versions of RIM
+will identify themselves as such, rather than as the VAX version.
+.P
+As extensions to basic RIM5, RIM commands may be entered in either
+case now. Translation to upper case ends when a " character is
+seen to allow literal data to be entered, and translation is only
+done for console input. Also, where possible the construct
+.skip 1
+\} command
+.skip 1
+spawns the command to the host OS. On VMS a LIB$SPAWN call is used
+so that effectively all VMS commands are available from within
+RIM (permitting long sessions to be broken for interruptions as
+needed and returned to without loss of context).
+
+
+
+2.1  RIM COMMANDS
+
+This section presents a summary of the RIM commands.  You are
+restricted from using certain commands based on the knowledge of
+assigned passwords.  If no passwords are assigned to the relations
+by the data base owner, there are no command restrictions (the
+DEFINE submodule excepted).  See figure 2.1-1.
+
+2.1.1  General Commands
+
+.c
+         DEFINING a Data Base Schema
+.p
+The DEFINE submodule (prompt ^D>) commands are used to define
+the structure of the data base and are used in the sequence described
+below. The definition of the data base is called the schema. The schema name
+corresponds to the name of the data base and is used to form the names
+of the files used in the database. Attributes, relations, passwords, and
+rules (constraints) are defined using this submodule. To access this
+submodule enter:
+
+DEFINE dbname
+
+You must identify the name of the database whose definition you are going to
+create or expand by specifying "dbname", the 1-6 character alphanumeric
+schema name. This name is used to form the name of the files used to
+store the data base. The dbname, when augmented by a single number must
+be a legal filename. Once dbname is specified you must identify the owner
+password of the data base.
+
+OWNER password
+
+The "password" entered must be a 1-8 character alphanumeric name. When used
+in the USER command, this password represents a master password to the
+data base. It will override any individual relation passwords. If the
+data base already exists and you want to define additional attributes or
+relations, "password" is checked against the existing owner password.
+.p
+Following the entering of the schema name and owner password, the attributes,
+relations, and relation passwords and rules are defined.
+.p
+To define attributes enter:
+
+ATTRIBUTES
+attname type1 [{length}] [KEY]
+                          VAR
+attname type2 [{row, col}] [KEY]
+                row, VAR
+                VAR, VAR
+                   .
+                   .
+                   .
+
+The attribute definitions are ended when you specify one of the DEFINE
+submodule keywords RELATIONS, PASSWORDS, or RULES.
+
+TYPE1 Attributes:
+.p
+RIM supports seven "type1" data types: real (floating point), integer,
+text, double precision, real vectors, integer vectors and double precision
+vectors. You must enter REAL, INT, TEXT, DOUB, RVEC, IVEC, or DVEC
+for type1. The default length is one value except for TEXT where it is 8
+characters. The length is specified in terms of the number of values and
+characters respectively. VAR indicates variable length. The optional KEY
+specification causes an index file to be built for this attribute. This
+file is used by RIM to quickly find qualifying rows for retrievals and
+updates. If KEY is not specified (nonkey attribute) the index file is not
+built. You should consider the cost of building and storing the KEY
+attribute pointers on the index file versus the benefits you will obtain
+when deciding if a KEY declaration should be used. No specific rules are
+given here; experience should be used as a guide. An attribute can
+be changed from KEY to non-KEY and vice-versa by using the BUILD KEY
+and DELETE KEY commands described in section 2.1.9. For large
+data bases (more than 1000 rows), experience has shown that it is
+most efficient not to specify a KEY in the DEFINE submodule
+but rather to load the data without keys and then build the index
+files using the BUILD KEY command. The greater the number of keys,
+the more efficient this method is.
+.p
+TYPE2 Attributes
+.p
+RIM supports three "type2" data types: real matrices, integer matrices
+or double precision matrices. You must enter RMAT,IMAT, or DMAT for
+type2. The matrices can be of fixed size, have variable column
+dimensions or variable row and column dimensions. You enter the row
+dimension first, followed by the column dimension. The default dimension
+is 1 by 1. The keyword KEY has the same meaning as for "type1" attributes.
+.p
+To define relations enter:
+
+RELATIONS
+
+relname WITH attname1 [attname2 ...]
+   ...
+
+  The relation dedfinitions are ended by specifying one of the
+DEFINE submodule keywords ATTRIBUTES, PASSWORDS, RULES, or END.
+
+  The attributes must be listed in the order in which they are
+to appear in the relation. No attributes can be used which have
+not been previously defined, either in the current attributes
+definition subsection or in a previous definition of this data
+base. Attributes which are defined but not included in a relation
+will not become part of the RIM schema.
+
+  A RIM data base must have attributes and relations defined, but
+passwords and constraint rules are optional. If read or modify
+passwords are desired enter:
+
+PASSWORDS
+
+{READ PASSWORD}  FOR relname IS password
+
+RPW
+
+{MODIFY PASSWORD} FOR relname IS password
+
+ MPW
+
+
+The password definitions are ended by specifying one of the DEFINE
+submodule keywords ATTRIBUTES, RELATIONS, RULES, or END.
+
+  A password can be any string of 1-8 alphanumeric characters. When
+you are doing queries, loads, or modifications, the current password
+is specified by the USER command. If this password does not match
+the read, modify, or owner password for a given relation, you
+cannot query that relation. If this password does not match the modify
+or owner password, you cannot load or modify the relation.
+
+  Constraint rules are another optional section of the DEFINE submodule.
+If rules are specified, they are used during the loading process and
+during CHANGE commands to screen out rows which do not meet the
+constraint rules. Rules may be defined for REAL, INT, and DOUB
+attributes of length 1 and for fixed length TEXT attributes. At most
+10 rules may be specified for a single relation.
+
+  To define constraint rules enter:
+
+
+RULES
+
+  attname [IN relname] {EQ} value [{AND} attname ...]
+
+                        NE          OR
+
+                        GT
+
+                        GE
+
+                        LT
+
+                        LE
+
+
+    or
+
+
+  attname1 IN relname {EQA} attname2 IN relname [{AND} ...]
+
+                       NEA                        OR
+
+                       GTA
+
+                       GEA
+
+                       LTA
+
+                       LEA
+
+
+where EQ, NE, GT, GE, LT, ands LE mean equals, not equal to, greater than,
+greater than or equal to, less than, or less than or equal to respectively.
+EQA, NEA, etc. mean equals attribute, not equals attribute, and so on.
+
+  The rule definitions are ended by specifying one of the DEFINE
+submodule keywords ATTRIBUTES, RELATIONS, PASSWORDS, or END.
+
+  Atributes referenced in the rule definitions must have been previously
+defined. By specifying rules, you can restrict an attribute to a range
+of values or require that the value of an attribute in one relation
+have a specific relationship to the values of an attribute in the
+same or a different relation. The comparison operators ending in A
+are used when the comparison is to an existing attribute rather than
+to a constant. A rule expression may have at most 9 boolean operators.
+The method used for constraint checking is that the value of the first
+attribute mentioned in the rule is obtained from the input (LOAD or
+CHANGE command) and checked against the value specified or against
+the existing data base value of the second attribute.
+
+  To complete schema definition and leave the DEFINE submodule you enter
+END.
+
+
+        HELP Command
+
+The HELP command allows you to obtain: a description of the
+available RIM commands, a discussion of the general command
+syntax, a summary of all available commands, and general news
+about the RIM system. HELP is available at any time during
+execution except when in the menu mode.
+
+
+To receive help when in the command mode enter:
+
+HELP [{command name}]
+    RIM
+    SYNTAX
+    WHERE
+    SUMMARY
+    NEWS
+    SORT
+    INPUT FORMAT
+
+
+
+                                          CURRENT PASSWORD
+SECTION NUMBER     COMMAND
+                                            OWNER  MODIFY  READ   NONE
+
+ . 2.4.1        . GENERAL                     X       X      X     X
+
+ . 2.4.2        . DEFINE                      X
+
+ . 2.4.3        . LOAD                        X       X
+
+ . 2.4.4        . DATA BASE QUERY             X       X      X
+
+ . 2.4.5        . SCHEMA QUERY                X       X 2    X 2
+
+ . 2.4.6        . COMPUTATION                 X       X      X
+
+ . 2.4.7        . DATA BASE MODIFICATION      X       X
+
+ . 2.4.8        . SCHEMA MODIFICATION         X       X 1
+
+ . 2.4.9        . RELATIONAL ALGEBRA          X       X
+
+ . 2.4.10       . REPORT GENERATION           X       X      X
+
+ . 2.4.11       . COMMUNICATION               X       X
+
+
+                    1 EXCEPT CHANGE OWNER        2 EXCEPT PRINT RULES
+
+
+
+
+The HELP submodule available inside the HELP submodule are identical to
+the HELP commands except that the keyword HELP is omitted.  The
+HELP submodule displays information one screen at a time.  After
+each screen you will have the option to continue displaying the
+text by entering * or to return to the HELP submodule by entering QUIT.
+You will remain in the submodule until you enter an END command which
+will return to the command mode.
+
+
+MENU Command
+
+The MENU command places you in the menu mode.  It may be entered
+at any point when in command mode except when in the DEFINE, HELP,
+or LOAD submodules.  The menu mode is particularly useful for
+schema definition and data loading.
+
+
+    MENU
+
+
+
+OPEN Command
+
+The OPEN command is required whenever an existing data base is to
+be used.  You specify the name of the data base.  RIM uses the
+name of the data base to form the names of the three files which
+contain the data base.  The data base files must either reside
+in your dictionary or you must make a logical file assignment prior
+to RIM execution.
+
+
+OPEN dbname
+
+Only one RIM data base may be open at a time (if you don't close
+the present data base before opening a new one, RIM will auto-
+matically close the present data base.)  The OPEN command must be
+issued before any commands that require data from the data base
+can be processed.
+
+CLOSE Command
+
+The CLOSE command permits you to close a RIM data base without
+leaving RIM.  This enables you to close one data base, then
+open or define a different one, all within one RIM session.
+This command is not needed if only one RIM data base is acces-
+sed during a RIM session.  This command results in update of
+the data base files to reflect all changes you have made to
+the data base.
+
+    CLOSE
+
+Note: the current data base will be closed for you when you
+leave RIM by issuing an EXIT command.
+
+USER Command
+
+This command is used to specify your user password to RIM.
+Your user password is used to check against read and modify
+passwords specified for the relations.  Each time this com-
+mand is issued, the new password replaces the current user
+password.  The default password is the word NONE.
+
+    USER password
+
+INPUT Command
+
+This command is used to specify the name of a file which
+contains the RIM commands and/or input data.  Alternate
+input file names may be assigned as often as required.
+The use of this command allows you to define command pro-
+cedures on a file and then have RIM execute the set of
+commands without user interaction.
+
+    INPUT filename
+
+
+The last command on the alternate input file should be INPUT
+INPUT which returns input to the batch input file or your
+terminal.  INPUT TERMINAL will, for interactive jobs, do the
+same thing.
+
+OUTPUT Command
+
+This command is used to specify the name of the output file.
+Specifying a file other than OUTPUT will result in the output
+from the RIM commands being placed on the specified file name.
+The output file name may be changed as often as desired.  The
+use of this command allows the interactive user to get an
+offline hardcopy output from RIM.
+
+    OUTPUT filename
+
+OUTPUT OUTPUT will return the output to the batch output file
+or your terminal.  OUTPUT TERMINAL will, for interactive
+jobs, do the same thing.
+
+ECHO Command
+
+This command is used to control the printing of your input
+commands on the output file.  Default is for ECHO printing
+enter:
+
+    ECHO
+
+NOECHO Command
+
+The NOECHO command turns off ECHO printing.
+
+    NOECHO
+
+TOLERANCE Command
+
+For attributes which contain floating point numbers, a tolerance
+may be used to qualify equality, nonequality and order.  The tol-
+erance applies to any real or double precision number you use in a
+WHERE clause.  If A is an attribute with value a, and r is a user
+specified number used in a WHERE clause, and t a tolerance (posi-
+tive, zero, negative), the following are true conditions:
+
+    A EQ r if and only if r-t <= a <= r+t
+    A NE r if and only if a < r-t or a > r+t
+    A GT r if and only if a > r-t
+    A GE r if and only if a => r-t
+    A LT r if and only if a < r+t
+
+
+    A LE r if and only if a <= r+t
+
+If t is a percentage tolerance, t is to be replaced with t x r/100
+in the above expressions to define true conditions for percentage
+tolerances.
+
+    TOLERANCE tol [PERCENT]
+
+where tol is the tolerance and the presence or absence of the
+keyword PERCENT indicates whether tol is a percentage tolerance
+or an absolute tolerance.  The TOLERANCE command can be used
+as many times as desired to reset the tolerance.  A tolerance
+stays in effect for a session until a new tolerance is speci-
+fied.  The default value for tolerance is 0. .
+
+NOCHECK Command
+
+Rule checking applies to the CHANGE and LOAD commands. Default
+is that rules, if defined, are enforced.  The NOCHECK command
+suppresses the ruler checking.
+
+    NOCHECK
+
+CHECK command
+
+The CHECK command turns on rule checking.  The CHECK and NOCHECK
+commands may be issued as many times as required anywhere in
+the input stream.
+
+    CHECK
+
+EXIT Command
+
+To leave RIM without dropping your current data base enter:
+
+    {EXIT}
+     QUIT
+
+This command closes your current data base.  Data needed by your data
+bases is copied from the incore working areas to the logical files
+whose names were determined by the OPEN command or by the data base
+name designated in the DEFINE submodule.
+
+
+RELOAD Command
+
+The RELOAD command is used whenever you want to rebuild the data
+files of your data base to recover unused space created by row
+deletions, relation removals, and certain attribute changes.
+When a row is deleted or a relation removed, its space is not reused
+until you issue this command.  In addition, if a variable length
+
+
+
+attribute is modified so that it increases in length, the row is
+deleted and replaced with a new one.  the old row becomes unused
+space.  If your data base has any KEY attributes, then the access
+pointer files maintained for those attributes are also rebuilt.
+The syntax for the command is:
+
+    RELOAD
+
+2.1.2  Define Submodule Commands
+
+Define Submodule Commands
+
+The Define submodule (prompt = D> ) commands  are used to define the
+structure of the data base and are used in the sequence described
+below.  The definition of the data base is called the schema.  The
+schema name is the name of the data base and forms the essential part
+of the names of the files used for the data base.
+Attributes, relations, passwords, and constraints (rules) are defined
+using this submodule.  The naming conventions for schema definition
+are described in section 2.3.3.  To access this submodule enter:
+
+    DEFINE dbname
+
+You must identify the name of the data base whose definition you are
+going to create or expand by specifying the schema name.  This name
+is used to form the name of the files used to store the data base
+tables.  The dbname, when augmented with a single number must be
+a legal filename.  Once dbname is specified you must identify the
+owner password of the definition.
+.INDEX OWNER password
+
+    OWNER password
+
+If the data base already exists and you want to define additional
+attributes or relations, "password" is checked against the existing
+owner password.
+
+
+    ATTRIBUTES
+
+    attname type1 [{length}] [KEY]
+            VAR
+
+    attname type2 [{row,col}] [KEY]
+            row,VAR
+            VAR,VAR
+-
+-
+-
+
+
+
+The attribute definitions are ended when you specify one of the
+keywords RELATIONS, PASSWORDS or RULES
+
+Type1 Attributes:
+
+RIM supports seven data types of "type1": real (floating point),
+integer, text, double precision, real vectors, integer vectors and
+double precision vectors.  You must enter REAL, INT, TEXT, DOUB,
+RVEC,IVEC or DVEC for type1.  The default length is one number,
+except for TEXT for which it is 8 characters.  The length is speci-
+fied in number of values and characters respectively.  VAR indicates
+variable length.  The optional KEY specification causes an index file
+to be built for the attributes which is used by RIM to quickly find
+qualifying rows for retrievals and updates.  The default is that such
+an index file is not built (non-key attribute).  You should consider
+the cost of building and storing index file data versus the benefits
+you will obtain from quicker retrievals when deciding if a KEY declara-
+tion should be used.  No specific rules can be given here, experience
+should be used to judge.  An attribute can be changed from KEY to NON-
+KEY or vice-versa by using the BUILD KEY and DELETE KEY commands des-
+cribed in section 2.1.8.  For large data bases (more than 1,000 rows) ,
+experience has shown that it is most efficient not to specify a KEY in
+the DEFINE submodule but rather to load the data without keys and to
+later cause index files to be built using the BUILD KEY command.  The
+greater the number of keys, the more efficient this method is.
+
+Type2 Attributes:
+
+
+RIM supports three data types of "type2": real matrices, integer
+matrices or double precision matrices.  You must enter RMAT, IMAT
+or DMAT for type2.  The matrices can be of fixed size, have variable
+column dimension or variable row and column dimensions.  You enter
+the row dimension first, followed by the column dimension.  Default
+dimension is 1x1.  The key-word KEY has the same meaning as for
+"type1" attributes.
+
+To define relations enter:
+
+    RELATIONS
+
+    relname WITH attname1 [attname2...]
+
+
+          -
+          -
+          -
+The relation definitions are ended by specifying one of the key-
+words ATTRIBUTES, PASSWORDS, RULES, or END which start the other
+sections of the DEFINE submodule or finishes the schema definition.
+
+
+The attributes must be listed in the order in which they are to
+appear in the relation.  No attributes can be used which have not
+been previously defined, either in the current attributes definition
+subsection or in a previous definition of this data base.  Attri-
+butes which are defined but not included in a relation will not be-
+come part of the RIM schema.
+
+A RIM data base must have attributes and relations defined, but
+passwords and constraint rules are optional.  If read or modify
+passwords are desired enter:
+
+    PASSWORDS
+
+    {READ PASSWORD} FOR relname IS password
+     RPW
+
+    {MODIFY PASSWORD} FOR relname IS password
+     MPW
+
+             -
+             -
+             -
+
+The password definitions are ended by specifying one of the key-
+words ATTRIBUTES, RELATIONS, RULES, or END which start the other
+sections of the DEFINE submodule or finishes the data base defini-
+tion.  Passwords can be any string of alphanumeric characters up
+to 8 characters long.  When you are doing queries, loads, or modi-
+fications, the current password is specified by the USER command.
+If this password does not match the read, modify, or owner pass-
+word for a given relation, you can query that relation.  If this
+password does not match the modify or owner password, you cannot
+load or modify the relation.
+
+Constraint rules are another optional section of the DEFINE sub-
+module.  If rules are specified, they are used during the loading
+process or during CHANGE commands to screen out rows which do not
+meet the constraint rules.  Rules are specified by relation.  At
+most
+10 rules may be specified for a single relation.  There are several
+options available in the rule definition section.  To define
+constraint rules enter:
+.INDEX Define RULES
+
+    RULES
+
+    attname [IN relname]  {EQ} value [ {AND} attname ...]
+                           NE            OR
+                           GT
+                   GE
+                       LT
+                   LE
+
+
+or
+
+
+    attname1 IN relname {EQA} attname [ {AND} ...]
+                         NEA              OR
+                         GTA
+                         LTA
+                         LEA
+
+where:  EQ  = Equals
+        NE  = Not equal to
+        GT  = Greater than
+        GE  = Greater than or equal to
+        LT  = Less than
+        LE  = Less than or equal to
+        EQA = Equals attribute
+        NEA = Not equal to attribute
+        LTA = Less than attribute
+        LEA = Less than or equal to attribute
+
+The rule definitions are ended by specifying one of the key-
+words ATTRIBUTES, RELATIONS, PASSWORDS, or END which start
+the other sections of the DEFINE submodule or finishes the
+schema definition.  Attributes referenced in the rule defini-
+tions must have been previously defined.  By specifying
+rules, you can restrict an attribute to a range of values or
+require that the value of an attribute in one relation have
+a specified relationship to the values of an attribute in
+the same or different relation.  The comparison operators
+ending in A are used when the comparison is to existing
+attribute values rather than to a specified constant.  A
+rule expression may contain a maximum of 9 Boolean operators.
+
+The method used for constraint checking is that the first
+attribute mentioned in the rule is taken from the input
+(LOAD or CHANGE command) data and checked against the re-
+mainder of the rule expression using existing values in
+the data base.
+
+To finish the schema definition you enter the following
+keyword and leave the DEFINE submodule:
+
+    END
+
+Example of DEFINE submodule commands:
+
+    DEFINE RIMDS
+    OWNER ME
+     ATTRIBUTES
+      MODEL TEXT KEY
+      WEIGHT REAL
+      NUMPASS INT
+      CARRIER TEXT
+      FLIGHTNO INT
+
+
+      NAME TEXT KEY
+      AGE INT
+      UPDATE IMAT 4,VAR
+     RELATIONS
+      AIRPLANE WITH MODEL WEIGHT NUMPASS
+      FLIGHTS WITH CARRIER FLIGHTNO MODEL UPDATE
+      PEOPLE WITH NAME AGE
+     PASSWORDS
+      MPW FOR FLIGHTS IS AGENT
+      RPW FOR PEOPLE IS BLUE
+     RULES
+      MODEL IN FLIGHTS EQA MODEL IN AIRPLANE
+      AGE GT 21 AND AGE LT 65
+      NUMPASS IN AIRPLANE LE 350
+
+2.1.2 Loading a relation
+2.1.3  Load Submodule Commands
+
+The LOAD submodule (prompt = L>) commands are used to add rows to
+a newly defined relation or to add rows to a relation which
+already contains data.  To access this submodule enter:
+
+    LOAD relname
+
+You may now load rows into the relation, one row at a time, by
+entering data values in an order corresponding to the attribute
+order:
+
+    value1 value2 ... valuen
+
+
+The method used to input values for the different attribute types
+is shown below:
+
+
+        Attribute
+
+          Length or
+  Type    Dimension        Valuei                 Remark
+
+
+REAL,INT   n n=>1      (val1 ... valn)          Parentheses
+DOUB,RVEC                                       optional
+IVEC,DVEC
+
+REAL,INT   VAR         (val1 val2 ...)          Parentheses
+DOUB,RVEC                                       required
+IVEC,DVEC
+
+TEXT       any         "text string"            In many cases,
+                          (see section 1.3)
+                        " " is optional
+
+RMAT,IMAT  m,n      ((r1c1...rmc1)(r1c2...) +   Columnwise
+DMAT                     ...rmcn))              Parentheses
+                                                optional
+
+RMAT,IMAT  m,VAR    ((r1c1...) (r1c2...)...))   Columnwise
+DMAT        or                                  Parentheses
+           VAR,VAR                              required
+
+
+-----------------------------------------------------------------------
+
+
+To finish data loading you enter:
+
+    END
+
+Multiple relations may be loaded from within the LOAD submodule by
+re-entering the LOAD command instead of the END command.
+
+
+Example of LOAD submodule commands:
+
+        USER AGENT
+        LOAD AIRPLANE
+        DC9 87000.  110
+        747SP 200000.  350
+        LOAD PEOPLE
+        BOB 30
+        JOE 32
+        ALICE 29
+        LOAD FLIGHTS
+        UAL 16 "757"  ((1,2,3,4) (4,5,6,7))
+        *3 ((2,4,5,8)(1,2,3,4) (4,5,6,7))
+        END
+
+
+
+If the value for an attribute is unknown, you enter the characters
+-0- for the missing value or use two successive commas.
+
+    L1011 -0- -0- 250
+    L1011,,,250
+
+These two input entries have identical meaning.
+
+2.1.3 Querying A Relation
+2.1.4  Commands for Querying the Data Base
+
+SELECT Command
+
+The SELECT command is used for displaying or printing data from
+one relation.  It has many options.  To print all the data from a
+relation:
+
+    SELECT ALL FROM relname
+
+To print selected attribute values from all rows in a relation:
+
+    SELECT attname1 [  attname2 ... attnamen ] FROM relname
+
+The above command will print up to 20 attributes in any order.
+The number of attributes is limited by space available in a line.
+As a rule of thumb, 7 attributes may be selected when running at
+an 80 character interactive terminal and 11 when running in the
+batch mode or at an 132 character terminal.
+
+For variable length attributes or for attributes of fixed length
+that would otherwise not fit on aline alone or together with
+other attributes, you may format the output using the optional
+field width control:
+
+    SELECT attname1 [ =fw1 ] [ attname2 [ =fw2 ] ... ] +
+
+    FROM
+
+fwi is the output field width for attnamei.  For a text type
+attribute, fwi is the width of the output paragraph in number
+of characters, for other attribute types it is the number of
+values.  When the field width option is used, RIM will use as
+many output lines as required for each row.
+
+The field width defaults depend on the attribute type. For a
+fixed width atrtribute, other than matrix, no paragraphing is
+attempted. For a fixed length matrix,the default paragraph
+width is a full row. The system wil use a field width equal
+to the attribute length or column dimension to display the value(s)
+of the attribute. For a variable length attribute of type TEXT,
+the default field width is 40 characters with paragraphing. For
+variable length attribtes of type REAL, INT, DOUB, the default
+is 4 values with paragraphing. For variable length vector type
+attributes, the default is a display of the length and 3 values
+with paragraphing. For variable length matrix attributes the
+default is a display of the row and column dimensions and 3
+values with paragraphing. Each row starts on a new line.
+
+If a field width is specified, the system will display the
+dimension of variable length vectors and matrices and use one
+of the specified output positions for these values. However,
+if a field width of 1 is specified for such an attribute, the row
+and column dimensions will not be displayed.
+
+Defaults are rather complex.  For a fixed length attribute,
+other than matrix, no paragraphing is attempted.  For a fixed
+length matrix, the default paragraph width is a full row.  The
+system will use the field width required to display the value(s)
+of the attribute.  For a variable length attribute of type TEXT,
+the default is a display of a maximum of 40 characters with
+paragraphing.  For variable length attributes of types REAL, INT,
+DOUB, the default is 4 elements with truncation.  For variable
+length vector type attributes, the default is 4 elements with
+paragraphing (no truncation).  For variable length matrix at-
+tributes the default is 4 elements with paragraphing (no trun-
+cation).  A row starts on a new line.
+
+Whether field width is specified or not, the system will display
+the dimension of variable length vectors and matrices using one
+of the output positions.  However, should you specify a width of
+one for such an attribute, the row and column dimensions will not
+be displayed.
+
+Further information about line width, number of lines per page,
+defaults and user specifications is given in section 2.1.10 as
+part of the RIM report writing features.
+
+When paragraphing TEXT type attributes, RIM will identify sub-
+strings of text separated by blanks.  The substring is placed
+on the current line if there is space available.  If the current
+line contains less than four characters, the number of characters
+that fit on the line are removed from (the front of) the substring
+and put on the line (without hyphen) and continued on the next
+line.  If the current line contains more than four characters,
+the substring will be placed on the next line.
+
+Examples of SELECT command:
+
+SELECT ivecvar FROM rel1
+
+        DIM     IVECVAR
+-----------------------------------
+
+         7        1     2       3
+                  4     5       6
+                  7
+         1       10
+
+
+SELECT imatvv FROM rel1
+
+       ROW    COL    IMATVV
+---------------------------------------
+
+        2      5      11     12     13
+                      14     15
+                      21     22     23
+                      24     25
+        1      1      11
+
+
+.INDEX SELECT command
+
+SELECT textv = 9 FROM rel 1
+
+
+TEXTV
+------------
+THIS IS
+AN EXAMPL
+E OF
+WRAPAROUN
+D OF TEXT
+THIS IS
+ANOTHER
+EXAMPLE
+OF TEXT
+
+
+
+The attribute name attnamei may be replaced by its correspond-
+ing attribute number (attnum1).  The attribute number is deter-
+mined by the position of the attribute in the relation.  Specific
+elements of a vector or a matrix may also be designated. The general
+form of the unconditional SELECT command is:
+
+SELECT {attname1 [ = fw1 ]} [attname2 [= fw2] ...] +
+        attnum1 [ = fw1 ]
+        attname1(i)
+        attname1(i,j)
+        attnum1(i)
+        attnum1(i,j)
+        ALL
+FROM  relname
+
+
+To print all attributes from a relation where certain conditions
+are met:
+
+  SELECT ALL FROM relname WHERE condition1 [ {AND} condition2 ...]
+                                               OR
+
+Up to ten conditions may be combined using the Boolean operators
+AND/OR.  The conditions are combined from left to right.
+A LIMIT condition, if used, does not count as one of the 10
+conditions.
+Each condition may be one of the following forms:
+
+    attname EXISTS
+    attname FAILS
+    attname EQ MAX
+    attname EQ MIN
+    attname EQ value
+    attname EQS value
+    attname NE value
+    attname GT value
+    attname GE value
+    attname LT value
+    attname LE value
+    attname EQ list
+    attname NE list
+    attname1 EQA attname2
+    attname1 NEA attname2
+    attname1 GTA attname2
+    attname1 GEA attname2
+    attname1 LTA attname2
+    attname1 LEA attname2
+    ROWS EQ rownumber
+    ROWS NE rownumber
+    ROWS LT rownumber
+    ROWS LE rownumber
+    ROWS GE rownumber
+    ROWS GT rownumber
+    ROWS EQ list
+    ROWS NE list
+    LIMIT EQ number
+
+where:  EQ  = Equals
+        EQS = Contains the text string
+        NE  = Not equals
+        GT  = Greater than
+        GE  = Greater than or equal to
+        LT  = Less than
+        LE  = Less than or equal to
+        EQA = Equals attribute
+        NEA = Not equals attribute
+        GTA = Greater than attribute
+        GEA = Greater than or equal to attribute
+        LTA = Less than attribute
+        LEA = Less than or equal to attribute
+        MAX = Maximum value
+        MIN = Minimum value
+
+Attname, attname1, attname2 may refer to an element of a vector
+or a matrix.
+
+When an attribute has been assigned a value, then EXISTS will
+qualify those attributes.  If an attribute has not been assigned
+a value, but was loaded with -0-, then FAILS will qualify those
+attributes.
+
+MAX and MIN comparison can only be made for integer, real and
+double precision attributes of fixed length equal to 1.
+
+Value in a comparison statement must follow the rules of section
+2.1.3 for vectors and matrices, i.e., if the attribute is of
+variable length or dimension, parentheses must be used to input
+a vector or a matrix value or a list of vector and matrix values.
+
+
+EQS applies to text strings only.  In such a comparison, value is
+a text string and the comparison is true if value is found as a
+substring anywhere within the attribute for which comparison is
+requested.
+
+NE comparison when applied to matrices or vectors is true if the
+length or dimension is different from the length or dimension of
+your specified comparison vector or matrix or if any vector or
+matrix elements differs.
+
+GT and LT comparisons for vector and matrix attributes are
+"lexicographical", i.e. a comparison is made element by
+element (columnwise for matrices) and continued until a true
+or false condition is detected.  If no such condition is detected
+after the last element is checked, a false condition is assumed.
+Comparison is made only for vectors and matrices of the same
+sizes as comparison data.
+
+GE and LE comparisons for vector and matrix attributes are similar
+to GT and LT comparisons except it continues if an equal condi-
+tion is detected and if no condition is detected after the last
+element is checked, a true condition is assumed.
+
+Comparison rules for vector attributes apply also to real, integer
+and double precision attributes of fixed or variable length.
+
+A list is a simple list (a1, a2, a3,...,an) of values.
+
+The comparison key words ending in A are used when comparing
+the value of one attribute to the value of another attribute
+in the same row of the relation.
+
+ROWS refer to row numbers in a relation.  Note that a relation is
+loaded in input row order but that subsequent operations
+(changes) to the data base may cause the order of the rows to
+change.
+
+When the LIMIT clause is used, only the first LIMIT number of
+the rows that otherwise would qualify will actually qualify.
+
+Processing the WHERE condition can be speeded up greatly if
+index processing is used.  Index processing involves using
+the indices created for KEY attributes rather than looking
+at each row of a relation to find the rows qualified by
+the WHERE conditions.  Index processing will be used when
+the following are all true:
+
+    1)   The last condition uses an attribute which is KEY
+
+    2)   The last condition uses EQ
+
+    3)   The last condition is not combined by OR with the
+             other conditions.
+
+
+
+The output can be sorted by specifying sorting attributes.  The
+sorting order is user specified with default low to high.
+
+    SELECT ... FROM relname
+    SORTED BY attname1 [ {=A}  ] { attname2 [={A} ] ...] +
+                           D                   D
+
+    [ WHERE ...]
+
+A and D stands for ascending and descending order respectively.
+If a sort on more than one attribute is requested, the output will
+first be ordered according to the first mentioned attribute.  In
+case there are duplicates for the first sort attribute, these will
+be ordered by the second sort attribute, duplicates within this by
+the third and so on.  A maximum of 5 sorts may be specified.  When
+multiple attributes are used, ascending and descending order may
+be used in any combination.  Variable length attributes may not be
+used as sort attributes.  When fixed length attributes are used as
+sort attributes, only the first 20 characters and the first value
+is used for sort.
+
+All these options can be described using the following general
+syntax:
+
+    SELECT {attname1 [ = fw1 ] [...attname [ = fwn ] ] } +
+                attnum1...
+                attname1(i)...
+                attname1(i,j)...
+                attnum1(i)...
+                attnum1(i,j)...
+                ALL
+    FROM relname +
+    [SORTED BY attname [{=A} ]... ] +
+                          D
+    [WHERE condition1 [{AND} condition2 ... ]]
+                        OR
+
+If the sum of the lengths (or fwi) of the attributes requested
+exceeds the line capacity, the data line will be truncated.
+See section 2.1.10 for further expanation of line width control.
+
+TALLY Command
+
+The TALLY command prints a tally for an attribute giving each
+unique value and the number of times it occurs in a relation.
+The tally is ordered ascending or descending per user input.
+Default is ascending.  The WHERE clause is optional and uses
+the same syntax as in the SELECT command.
+
+    TALLY attname [{=A}] FROM relname [ WHERE ... ]
+                     D
+
+
+Examples of SELECT and TALLY commands:
+
+   SELECT ALL FROM AIRPLANE
+   SELECT MODEL FROM AIRPLANE
+   SELECT ALL FROM AIRPLANE WHERE WEIGHT GT 100000.
+   *8 AND NUMPASS LT 200
+   SELECT AGE FROM PEOPLE WHERE NAME EQ BOB
+   SELECT ALL FROM AIRPLANE SORTED BY MODEL=D
+   TALLY MODEL FROM FLIGHTS
+   TALLY MODEL FROM FLIGHTS WHERE CARRIER EQ UNITED
+   SELECT ALL FROM DIMENS WHERE HEIGHT GTA WIDTH
+   SELECT FILE TITLE=4 OWNER FROM PFDATA
+
+2.1.4 Querying the Schema
+2.1.5  Commands for Querying the Schema
+
+When you use any of these commands, RIM will display only
+the data you are authorized to access according to your
+current user password.
+
+LISTREL Command
+
+The purpose of LISTREL is to provide you with information
+about the relations in the data base.
+
+There are three formats for the LISTREL command.  The first
+consists of simply entering:
+
+    LISTREL
+
+Using LISTREL in this fashion provides you with a list of
+all relations currently defined in your data base.  If you
+wish to display the definition of a specific relation, then
+the syntax is:
+
+    LISTREL relname
+
+The use of LISTREL in this manner also provides a count of
+the number of rows defined for the specified relation.
+
+    LISTREL ALL
+
+This command (restricted by user password) will display the
+definitions of all relations in the data base, including
+counts of the number of defined rows in each relation.
+
+EXHIBIT Command
+
+The purpose of the EXHIBIT command is to allow you to query
+the RIM dictionary to obtain the names of all relations
+having a specific set of attributes.  For example, if you
+want to know which relations contain the attribute attname
+you would enter:
+
+    EXHIBIT attname
+
+
+You would then obtain either a list of the relations having
+this attribute, or a message indicating that this attribute
+was not found in any relations in the data base.
+
+The EXHIBIT command also allows you to query fro a list of
+attributes(maximum of 10).  Suppose that you wanted to know
+which relations contian both attname1 and attname2.  The
+command would then be:
+
+    EXHIBIT attname1 attname2
+
+The general syntax of this command is:
+
+    EXHIBIT attname1 [attname2 ... attnamen ]
+
+PRINT RULES Command
+
+This command can be used when the current user password
+matches the owner password of the data base definition.  To
+obtain a complete list of all constraint rules enter:
+
+    PRINT RULES
+
+2.1.6  Computation Command
+
+.INDEX COMPUTE Command
+COMPUTE Command
+
+The COMPUTE command is used to compute simple functional
+values of an attribute.  A WHERE clause is optional and uses
+the same syntax as is used in the SELECT command.
+
+  COMPUTE {COUNT} attname FROM relname [WHERE... ]
+            MAX
+            MIN
+            AVE
+            SUM
+
+There are some restrictions as to the type and word length
+of the attribute when using these computed functions.  All
+of these functions exclude any -0- values when making their
+computations.  The following table describes the attribute
+type and length restrictions for each function:
+
+
+FUNCTION  ATTRIBUTE TYPE       ATTRIBUTE LENGTH
+
+COUNT     any                  any
+MIN       any of fixed length  1 for non-text, ANY for text
+MAX       any of fixed length  1 for non-text, ANY for text
+AVE       int, real, double    1
+SUM       int, real, double    1
+
+Examples of COMPUTE command:
+
+    COMPUTE AVE NUMPASS FROM FLIGHTS
+    COMPUTE MAX WEIGHT FROM FLIGHTS WHERE NUMPASS LT 100
+    COMPUTE COUNT NAME FROM PEOPLE WHERE AGE GT 30
+
+2.1.6 Modification Commands
+2.1.7  Data Base Modification Commands
+
+These commands are used to change the contents of the data
+base.  a modify or owner password correlation is required in
+order to use these commands.
+
+.INDEX CHANGE Command
+CHANGE Command
+
+.p
+CHANE (Attribute values)
+.p
+The CHANGE command is used to change the value of an
+attribute in a relation where certain conditions are met.
+
+   CHANGE {attname1}    TO value [IN relname] WHERE ...
+           attname(i)
+           attname(i,j)
+
+Value has the same form as described in Section 2.1.3.  The
+WHERE clause is required and uses the same syntax as in the
+SELECT command.  If the relation name is not specified, the
+attribute is changed in all relations where the attribute is
+found and the conditions are met.
+
+
+CHANGE (passwords)
+
+  The read or modify passwords may be changed using the command
+
+CHANGE#{RPW}#TO#newpass#FOR#relname
+        MPW
+
+
+  CHANGE OWNER
+
+  The CHANGE OWNER command is used to change the name of the data
+base owner. Only the curent owner may use this command.
+
+  DELETE ROWS Command
+
+The DELETE ROW command is used to delete selected rows in a
+relation.
+
+    DELETE ROW FROM relname WHERE ...
+
+The name of the relation must be specified as well as a
+WHERE clause.  The syntax for the WHERE clause is the same
+as in the SELECT command.
+
+  DELETE DUPLICATES Command
+
+This command is used to remove any duplicate rows from a
+relation.  It is particularly useful on relations which have
+been created by any of the relational algebra commands
+(JOIN, INTERSECT, SUBTRACT, or PROJECT).  The syntax for
+this command is:
+
+DELETE DUPLICATES [attname1, attname2,...] from relname
+
+Duplicates are checked only for the specified (combination
+of) attribute(s).  Default is to check the complete row (all
+attributes).
+
+Examples of CHANGE, DELETE, and DELETE DUPLICATES commands:
+
+   CHANGE NUMPASS TO 320 IN AIRPLANES WHERE MODEL EQ 747SP
+   CHANGE NAME TO ROBERT WHERE NAME EQ BOB
+   DELETE ROW FROM AIRPLANES WHERE MODEL EQ DC10
+   CHANGE STABILITY TO LOW IN DIMENSIONS WHERE HEIGHT GTA
+WIDTH
+196z   DEL DUP NUMPASS FRO AIRPLANES
+
+  DELETE RULE
+
+  The DELETE RULE command is used to delete a specified constraining
+rule. The USER password must match the owner. Rulenumber is obtained
+using the PRINT RULES command. The format of the command is
+
+DELETE RULE rulenumber
+
+
+2.1.8  Schema Modification Commands
+
+These commands are used to change the data base schema
+definition.  Except for the CHANGE OWNER command, a modify
+or owner password correlation is required in order to use
+these commands.
+
+CHANGE OWNER Command
+
+The CHANGE OWNER command is used to change the name of the
+data base password.  Only the current owner is allowed to
+use this command.
+
+    CHANGE OWNER TO newowner
+
+RENAME Attribute Command
+
+The RENAME attribute command is used to change the name of
+an attribute in the data base definition (schema).
+
+   RENAME attname1 TO attname2 [IN relname]
+
+THe old name is attname1 and the new name is attname2.  if
+the name of the relation is not specified, then the name
+change takes place in every relation that contains the old
+name.  If the relname is specified and attname1 occurs more
+than once, the first occurence will be changed.
+
+RULES and KEY(s) defined for attname1 will automatically be
+redefined to apply to attname2.
+
+Examples of RENAME command:
+
+   RENAME MODEL TO VERSION IN AIRPLANES
+   RENAME NUMPASS TO CAPACITY
+
+
+
+BUILD KEY Command
+
+This command is used to change an attribute from non-key to
+KEY.  An index is built from existing data values by amking
+a pass through current rows of the specified relation.  This
+index is then used and maintained just as if the attribute
+had been declared to be KEY in the original data base
+definition.
+
+    BUILD KEY FOR attname IN relname
+
+Keys are not transferred to relations created by relational
+algebra commands.
+
+DELETE KEY Command
+
+This command is used to change an attribute from KEY to
+non-key.  The index file for that attribute is deactivated
+and no longer maintained or used once the attribute  has
+been changed to non-key with this command.
+
+    DELETE KEY FOR attname IN relname
+
+CHANGE PASSWORD Command
+
+The read or modify passwords may be changed by using the
+following command:
+
+    CHANGE {RPW} TO newpass FOR relname
+            MPW
+
+RENAME RELATION Command
+
+You may change the name of a relation by using the following
+command:
+
+    RENAME RELATION relname TO newname
+
+RULES applying to relname will automatically apply to
+newname.
+
+REMOVE Command
+
+The REMOVE command is used to remove a relation definition
+and its data from the data base.
+
+    REMOVE relname
+
+2.1.9  Relational Algebra Command
+
+These commands allow you to create new relations from
+existing relations.  All relational algebra commands require
+modify permission on the constituent relations.
+
+INTERSECT Command
+The purpose of the INTERSECT command is to allow you to
+combine the rows of relations into a third relation based on
+common values within a set of specified attributes.  The
+syntax of the INTERSECT command is:
+
+   INTERSECT relname1 WITH relname2 FORMING relname3 +
+   [USING attname1 [attname2 ... attnamen]]
+
+The USING clause identifies the attributes that form the
+resulting relation. The attributes used in the INTERSECT
+process are the subset of those identified by the USING
+clause which are present in both relations.
+
+For example, assume that you have the following two
+relations defined:
+
+
+          REL-1                          REL-2
+
+NAME     DEPT      JOB        DEPT       JOB          PAY
+-----    -----     -----      -----      -----        ----
+BOB      A         ENGR       A          ENGR         800
+JIM      C         SUPR       B          ENGR         450
+BOB      B         ENGR       C          ENGR         750
+RAY      C         ENGR
+
+You may INTERSECT two relations restricted to specific sets
+of attributes (the USING clause) or use all attributes of
+both relations.  In either case RIM will identify the common
+attributes and use the common values within these attributes
+to identify the conditions for intersect generation.
+
+Suppose you want to INTERSECT the two relations using
+attributes DEPT, NAME, and JOB.  The command for this would
+be:
+
+INTERSECT REL-1 WITH REL-2 FORMING REL-3 USING DEPT NAME JOB
+
+The result would be the new relation REL-3 shown on the next
+page.
+
+                     REL-3
+
+            DEPT     NAME      JOB
+            ----     -----     -----
+            A        BOB       ENGR
+            B        BOB       ENGR
+            C        RAY       ENGR
+
+In this example there are no duplicate rows in REL-3.
+However, it is possible that the intersect command will
+create duplicate rows.  Since, in general, duplicate rows
+are not desired in a relation, they can be removed with the
+DELETE DUPLICATES command.  Note also that by specifying
+which attributes the INTERSECT is using, you restrict the
+number of attributes in the resulting relation to only those
+specified in the USING clause.
+
+Suppose you want RIM to use all the attributes in the two
+relations.  In this instance you would enter:
+
+   INTERSECT REL-1 WITH REL-2 FORMING REL-4
+
+The result would be REL-4 consisting of the attributes
+NAME, DEPT, JOB, and PAY, shown below in the resulting rows:
+
+                      REL-4
+
+           NAME    DEPT     JOB      PAY
+           -----   -----    ----     ---
+           BOB     A        ENGR     800
+           BOB     B        ENGR     450
+           RAY     C        ENGR     750
+
+There may be situations where an INTERSECT is impossible to
+perform.  These include:
+
+   1)  The name of the resulting relation already exists
+
+   2)  The two relations have no common attributes
+
+   3)  The attributes in the USING clause do not exist in
+       the relation being intersected
+
+   4)  The resulting relation exceeds 1021 words
+
+If any of the above situations is encountered, you are
+warned of the problem and the INTERSECT command processing
+is stopped.  In the case where common attribute names exist
+but there are no matching values, the operation will be
+successful resulting in an empty relation (0 orws).
+
+The INTERSECT command is a powerful tool and may be used as
+a step towards satisfying queries which require attributes
+from more than on relation.
+
+JOIN Command
+
+The JOIN command is a function operating on two relations to
+form a third relation.  The purpose of the JOIN is to
+juxtapose two relations based on a specified attribute from
+each.  The result of the JOIN command is a third relation
+containing all of the attributes from both relations.  Rows
+are generated in the new relation as a result of the
+comparison conditions between attributes being satisfied.
+The syntax of the JOIN command is:
+
+   JOIN relname1 USING  attname1 WITH relname 2 USING +
+   attname2 FORMING relname3 [ WHERE {EQ} ]
+                                      NE
+                                      GT
+                                      GE
+                                      LT
+                                      LE
+
+The WHERE clause of the JOIN command is different form the
+WHERE clause of the SELECT command.  In JOIN it applies only
+to the comparison of the two attributes upon which JOIN is
+based.  If the WHERE clause is omitted (default), EQ is
+used.
+
+The value of attname1 in the first row of relname11 is
+compared to all the values of attname2.  Rows which qualify
+are generated in relname3.  The value of attname1 in the
+second row of relname1 is compared to all the values of
+attname2, etc.  Each row from relname1 may generate 0, 1, 2,
+or more rows in relname3.
+
+For example, consider the relations REL1 AND REL2:
+
+          REL1                     REL2
+
+ A        B        C            D        E
+---      ---      ---          ---      ---
+ 1        2        3            3        1
+ 4        5        6            6        2
+ 7        8        9
+
+The following JOIN command would produce the result shown.
+
+        JOIN REL1 USING B WITH REL2 USING D +
+        FORMING REL3 WHERE LT
+
+
+                 REL3
+
+ A        B         C          D         E
+---      ---       ---        ---       ---
+ 1        2         3          3         1
+ 1        2         3          6         2
+ 4        5         6          6         2
+
+The JOIN will function correctly on any comparison providing
+that you compare attributes of the same data type.  All
+attribute names in the resultant relation must be unique in
+order for you to obtain accurate results from subsequent
+commands using the relation.  Any duplicate attribute names
+should be change using the RENAME command before doing
+queries or updates to the new relation.  In the case of
+duplicate attribute names, RENAME when applied to a specific
+relation will change the first attribute name.
+
+There may be situations where a JOIN is impossible to
+perform.  These may include:
+
+   1)  The name of the resulting relation already exists
+
+   2)  The attribute in the USING clause does not exist in
+       the relation being joined
+
+   3)  The attributes being compared are different data
+       types or lengths
+
+   4)  An attribute in either of the relations greater than
+       300 computer words
+
+   5)  The resulting relation exceeds 1021 words
+
+If any of the above situations are encountered you are
+warned of the problem and the JOIN command processing is
+stopped.
+
+PROJECT Command
+
+The function of a PROJECT command is to create a new
+relation as a subset of an existing relation.  You may want
+to create the new relation from the old one by removing
+attributes, removing rows, or both.  The syntax for the
+PROJECT command is:
+
+PROJECT relname1 FROM relname2 USING {attname1...attnamen} +
+                                      ALL
+[WHERE ...]
+
+The WHERE clause is optional but it is specified, it has the
+same syntax as in the SELECT command.  You are required to
+specify which attributes are to be retained in the new
+relation.  The old relation is relname2 and the new relation
+is relname1.
+
+For example consider the following relation:
+
+                        PEOPLE
+
+EMPNUM     EMPNAME      BOSS      POSITION        GROUP
+------     -------      ------    --------        ------
+ 2181      JONES        SMITH     MANAGER         AADE
+ 3964      ERICKSON     BUSS      APPL-MGR        ACC
+ 6543      GRAY         PARKER    ASST-MGR        PHOTO
+ 2233      SCHMITZ      BUSS      APPL-MGR        ACC
+
+To create a new relation with EMPNAME and GROUP as the only
+attributes and where now rows contain PARKER as BOSS enter
+the command:
+
+    PROJECT TEMP1 FROM PEOPLE USING EMPNAME GROUP +
+    WHERE BOSS NE PARKER
+
+                        TEMP1
+
+              EMPNAME         GROUP
+              -------         ------
+              JONES           AADE
+              ERICKSON        ACC
+              SCHMITZ         ACC
+
+The PROJECT command is useful to reduce the size of a
+relation when only a subset of the data is needed.  RIM will
+not eliminate any duplicate rows formed in the new relation.
+ You must do that yourself with the DELETE DUPLICATES
+command.
+
+There may be situations where a PROJECT is impossible to
+perform.  These include:
+
+   1)  The name of the resulting relation already exists
+
+   2)  An attribute in the USING or WHERE clause is not in
+       the relation
+
+SUBTRACT Command
+
+The SUBTRACT command is similar to the PROJECT command in
+that the new relation is a subset of an existing relation.
+The rows, however, are selected based on the data in another
+relation rather than on a WHERE clause within the same
+relation.  Where the INTERSECT command looked for rows of
+two relations which matched up, the SUBTRACT command does
+just the opposite.  It looks for rows in the relation which
+do not match any rows in the other relation.  The syntax for
+the SUBTRACT command is:
+
+  SUBTRACT relname1 FROM relname2 FORMING relname3 +
+  [USING attname1 [attname2 ... attnamen]]
+
+All rows in the new realtion will come from relname2.  If
+the USING clause is not specified, then all attributes of
+relname2 will be attributes of relname3.  Relname1 is the
+relation that rows of relname2 are checked against for
+matches.  If a USING clause is specified at least one of the
+attributes in the clause must be common to both relations.
+
+As an example consider these two example relations:
+
+         EMPDATA                         BOSSDATA
+
+EMPNUM   EMPNAME   BOSS         BOSS     POSITION    GROUP
+------   -------   ------       ------   --------    --------
+ 2181    JONES     SMITH        SMITH    MANAGER     AADE
+ 3964    ERICKSON  BUSS         PARKER   ASST-MGR    PHOTO
+ 6543    GRAY      PARKER       BUSS     APPL-MGR    ACC
+ 8461    BROWN     WHITE
+ 2233    SCHMITZ   BUSS
+
+The following command will produce a new relation from
+EMPDATA:
+
+ SUBTRACT BOSSDATA FROM EMPDATA FORMING TEMP USING +
+ EMPNAME BOSS
+
+The resulting relation TEMP would contain only one row:
+
+                        TEMP
+
+                  EMPNAME  BOSS
+                  -------  -----
+                  BROWN    WHITE
+
+There may be situations where a SUBTRACT is impossible to
+perform. These include:
+
+   1)  The name of the resulting relation already exists
+
+   2)  The relations have no common attributes
+
+   3)  The number of attributes in the USING clause is
+       greater than the number in relname1
+
+   4)  An attribute in the USING clause is not in the
+       relations
+
+2.1.10  Report Generation Commands
+
+These commands establish a limited report generation
+capability.
+
+
+NEWPAGE Command
+
+This command causes a new page to be issued.  It applies to
+batch output only.  The command is:
+
+    NEWPAGE
+
+BLANK Command
+
+Blank lines can be inserted into the output stream by using
+the command:
+
+    BLANK n
+where n is the number of blank lines written.
+
+TITLE Command
+
+The command:
+
+    TITLE "titlestring"
+
+causes the text "titlestring" to be printed, centered on the
+line.  If the length of "titlestring" is longer than current
+lines width it will be truncated and a warning issued.
+
+DATE Command
+
+The command:
+
+    DATE
+
+will cause the current date to be printed, centered on the
+line.
+
+LINES Command
+
+This command controls the number of lines per page
+(exclusive of title.)  The command is:
+
+    LINES n
+
+will establish page size to n lines.  Default is 56.
+
+
+WIDTH Command
+
+This command controls the width of a printed line.  The
+command:
+
+    WIDTH n
+
+will establish a line width of n characters.  Default is 78
+if output is to a terminal, 132 if output is to a batch
+printer.  If n is specified to be less than 20, 20 will be
+used.
+
+
+2.1.11  Communication Command
+
+UNLOAD Command
+
+The UNLOAD command permits you to off-load a portion or all
+of your data base onto a previously designated file (see
+OUTPUT command).  The file will contain 80 characters text
+records and can be read by RIM as an input file on the same
+or on a different computer using the INPUT command.  Default
+file name is for006.  The syntax of this command is:
+
+    UNLOAD [dbname = newname] {ALL   } +
+                                   SCHEMA
+                                   DATA
+        [relname1 [ mpw1 ] relname2 [ mpw2 ] ... ]
+Specifying SCHEMA will off-load the schema of your data
+base, DATA will off-load the data of your data base and ALL
+will off-load both schema and data.
+
+Optionally, you may rename your data base by entering dbname
+=newname where dbname is the name of the currently open data
+base.  By specifying relation names, you will only off-load
+data and/or schemas for the specific relations.  The modify
+password does not allow you to modify access to the
+relation.
+
+There are implicit password restrictions to the unload
+command as follows:  If you are the data base owner, you may
+off-load any data and/or schema.  If you are not the owner,
+you may off-load data and/or schema for the relations for
+which you have modify access permission.  Your password
+becomes the owner of the off-loaded data base.  Rules, if
+any, will only be off-loaded if you are the owner of the
+data base and you have used the option ALL.
+
+
+2.2  MENU MODE EXECUTION OVERVIEW
+
+The RIM menu mode provides you with the capability to build
+the schema for a new data base and to update an existing
+data base definition.
+
+The options (create, update, query, command, and exit)
+available in menu mode are shown in figure 2.2-1.
+
+Executions may be terminated at anytime by entering the word
+QUIT.  EXIT, in response to an input prompt, will return you
+to the top menu.  The data base will be purged following a
+QUIT command.
+
+
+               l----------------l
+               l  BEGIN RIM 5.0 l
+               l----------------l
+                      l
+                      l
+             RIM COMMAND MODE
+             ENTER "MENU" FOR MENU MODE
+            R>MENU    l
+                      l
+                      l
+             SELECT THE EXECUTION OPTION DESIRED
+                 1)  CREATE A NEW DATABASE
+                 2)  UPDATE AN EXISTING DATABASE
+                 3)  QUERY AN EXISTING DATABASE
+                 4)  ENTER COMMAND MODE
+                 5)  EXIT
+                      l
+   l------------------------------------------------l
+   l              l             l         l         l
+   l              l             l         l         l
+CREATE OPTION     l         QUERY OPTION  l       EXIT
+SECTION 2.2.1     l         SECTION 2.2.3 l   SECTION 2.1.1
+                  l                       l
+             UPDATE OPTION         COMMAND MODE
+             SECTION 2.2.2         SECTION 2.1
+
+
+Figure 2.2-1 Section References for the Menu Mode Options
+
+
+2.2.1  Data Base Creation Option
+
+The purpose of this option is to construct a schema by
+prompting you for the data base, owner, the names of the
+relations, their associated attributes and read/modify
+passwords.
+
+After compilation of the schema, you have the opportunity to
+interactively load the data base and/or query the data base.
+
+In the command mode, you have available the full set of RIM
+commands (section 2.1) allowing the direct definition of the
+schema using the DEFINE submodule commands and the loading
+of the data base using the LOAD submodule commands.
+
+2.2.2 Data Base Update Option
+
+With this option you may add/modify relations and/or load
+additional data into the data base.  If additional relations
+are desired, you are prompted for the names of the
+relations, their associated attributes and read/modify
+passwords.  If additional data is to be loaded, the list of
+relations in the data base is displayed and your enter the
+required data.  Removal or modification of data in the data
+base is done using the RIM data base modification commands.
+
+In this command mode, you have available the full set of RIM
+commands (section 2.1) allowing the direct addition of
+relations using the DEFINE submodule commands and the
+loading of data using the LOAD submodule commands.  The data
+base modification commands are used to update existing data.
+
+2.2.3  Query Option
+
+With this option you are prompted for the data base name.
+The full set of RIM commands (section 2.1) is available to
+you for data base query.  In addition to query, all other
+data base activities are available through the RIM command
+mode.
+
+
+2.3  RIM MENU MODE INTERACTIVE DIALOGUE
+
+This section presents the questions and menus that appear in
+the menu mode.  The response options are also discussed.
+
+The menu mode is accessed by entering MENU anytime in the
+command mode when a R> prompt is present.
+
+2.3.1  General Option and Questions
+
+SELECT THE EXECUTION OPTIION DESIRED
+    1)  CREATE A NEW DATA BASE
+    2)  UPDATE AN EXISTING DATA BASE
+    3)  QUERY AN EXISTING DATA BASE
+    4)  ENTER COMMAND MODE
+    5)  EXIT
+
+SELECT THE UPDATE OPTION DESIRED
+    1)  DEFINE ADDITIONAL RELATIONS
+    2)  LOAD ADDITIONAL DATA
+
+    The desired update option is selected by entering
+    either the integer 1, allowing the definition of
+    additional relations, or 2, allowing the loading of
+    additional data into the data base.
+
+DO YOU WANT TO QUERY THE DATA BASE AT THIS TIME--Y OR N
+
+    You may switch to the command mode for query by
+    entering "Y".  If the query option is not desired
+    "N".
+
+
+2.3.2  Data Base Files
+
+ENTER THE NAME OF THE DATA BASE
+
+    The 1-6 character alphanumeric name assigned to the
+    data base is entered here.  The name is used to
+    create the names of the logical files that contain
+    the data base.
+
+
+2.3.3  Schema Definitions
+
+ENTER THE NAME OF THE DATA BASE
+
+ The 1-6 character alphanumeric name assigned to the data
+ base is entered here.  All future references to this data
+ will be via the assigned data base name.
+
+ENTER THE NAME OF THE DATA BASE OWNER
+
+ The 1-8 character alphanumeric name of the data base owner
+ is entered here.  This name is used as the schema password.
+ Additional schema definitions will not be permitted unless
+ the user password matches the owner password assigned here.
+
+ENTER THE NAME ASSIGNED TO THIS RELATION
+
+ A 1-8 character alphanumeric name assigned to the relation
+ being defined.
+
+
+ENTER THE READ PASSWORD FOR THIS RELATION
+
+ A 1-8 character alphanumeric string assigned by the owner
+ as the read password for the relation being defined.  if
+ the owner has assigned a read password the user password
+ must match in order to query the relation.  If no read
+ password is desired enter NONE.
+
+
+ENTER THE MODIFY PASSWORD FOR THIS RELATION
+
+ A 1-8 character alphanumeric string by the owner as the
+ modify password for the relation being defined.  if the
+ owner has assigned a modify password the user password must
+ match in order to load or modify the relation.  if no read
+ password is desired enter NONE.
+
+ENTER THE ATTRIBUTES OF THIS RELATION
+ENTER END WHEN COMPLETE
+
+   attname  type  length (IF >) "KEY" (IF KEY)
+
+Attname = 1-8 character alphanumeric string identifying
+          the attribute being defined.
+
+
+Type =  INT    (Integer)
+        REAL   (Real)
+        TEXT   (Text)
+        DOUB   (Double Precision)
+        RVEC   (Real Vector)
+        IVEC   (Integer Vector)
+        DVEC   (Double Precision Vector)
+        RMAT   (Real Matrix)
+        IMAT   (Integer Matrix)
+        DMAT   (Double Precision Matrix)
+
+Length = number of characters (text) or number of values
+         (all others)
+
+
+1,2,3 ..., etc., or VAR    INT
+                           TEXT
+                           REAL
+                           DOUB
+                           RVEC
+                           IVEC
+                           DVEC
+
+     row, column or        RMAT
+     row, VAR or           IMAT
+     VAR, VAR              DMAT
+
+A variable length (or length greater than one) INT, REAL, or
+DOUB can be considered to be functionally identical to IVEC,
+RVEC, or DVEC.
+
+KEY = the word key indicates the attribute is key.
+
+Example:  To define a text string attribute (TEXTST) of 60
+characters, a real attribute (TEXTST) of 60 characters, a
+real attribute (REAL1), an integer key attribute (INT-1),
+and a real matrix with dimensions 6x8 (MAT68), the following
+entries would be made:
+
+    R> TEXTST TEXT 60
+    R> REAL1 REAL
+    R> INT-1 INT KEY
+    R> MAT68 RMAT 6,8
+
+To end the definition of the attributes for this relation,
+the word "END" is entered.
+
+DO YOU HAVE ADDITIONAL RELATIONS TO DEFINE--Y OR N
+
+  Additional relations may be defined by entering the
+  character "Y".  If no additional relations are to be
+defined at this time, enter "N".
+
+2.3.4  Data Base Loading
+
+DO YOU WANT TO LOAD THE DATA BASE--Y OR N
+
+ The data base is available for data loading if desired.
+ Enter "Y" if you want to load the data base at this time.
+ Enter "N" if no data is to be loaded.
+
+SELECT THE RELATION TO BE LOADED
+
+ The relations defined in the data base will be listed.  You
+ select the relation to be loaded by entering the integer
+ corresponding to the desired relation.
+
+ENTER THE MODIFY PASSWORD FOR THIS RELATION
+
+ No data loading will be allowed for the selected relation
+unless the proper modify password is entered here.
+
+ENTER THE ATTRIBUTE VALUES IN THE SPECIFIED SEQUENCE
+ENTER END WHEN COMPLETE
+ Entering data values at this point loads the data base.
+ The values are entered in the order indicated and the value
+ entered must correspond to the attribute type.  If a text
+ string contains embedded blanks, or commas, or if entirely
+ numeric text is entered, it must be enclosed in quotation
+ marks .  Unused trailing characters in fixed length text
+ strings will be blank filled.  It is recommended that
+ leading blanks not be used in text strings.  If vectors or
+ matrices are loaded, all values must be specified. Enter
+ "END" when data loading is complete.  It is recommended
+ that large data bases and data bases that have vectors and
+ matrices use the application program interface for loading
+ data.
+
+DO YOU HAVE ADDITIONAL RELATIONS TO LOAD--Y OR N
+
+ If you want to load another relation, enter "Y". If all the
+ data base to be loaded at this time has been loaded, enter
+ "N".
+
+
+3.0  RIM EXECUTION THROUGH THE APPLICATION PROGRAM INTERFACE
+
+Any programming language which can call FORTRAN subroutines
+can access and modify a pre-defined RIM data base through
+FORTRAN-callable subroutines contained in the RIM
+application program interface library(RIMLIB).  Data is
+accessed one row at a time.  The RIM data access subroutines
+store data in and retrieve data from an array you provide in
+your program logic.  In either case the array used must be
+large enough to hold one complete row for each relation
+accessed.
+
+Attributes which contain text data must be given particular
+care.  In general, Hollerith format (left adjusted, blank
+filled) is used.  Some textual parameters like those for
+data base, relation and attribute names must allow for eight
+characters (8H), others like key words such as INT, REAL
+etc. must allow room for four characters (4H).  Values of
+textual attributes or text strings used in conditional
+expressions are passed in an array packed together with
+other kinds of information.  Such text strings are left
+adjusted with unspecified fill.  The number of words such
+text strings occupy depends upon the length of the text
+string.  there are special instructions in appropriate
+sections on how to pass such attributes.
+
+The application program interface requires you to manage the
+data base files.  The data base files must exist on three
+properly named logical files before your program can be
+executed.
+
+Password checks operate in the application program interface
+in much the same way as in the standalone system.  No
+password permission is requird for RMOPEN, RMUSER, RMRULE,
+or RMTOL.  Read permission is required for all other calls
+except RMLOAD and RMPUT  for which modify permission is
+required.  Modify permission implies read permission.
+
+
+3.1  INITIALIZING THE DATA BASE
+
+    CALL RMOPEN  (abname)
+        ---------------------
+
+        Input parameter:
+       Dbname-- the name of the data base in Hollerith
+             format
+
+This routine initializes the internal tables used by RIM and
+opens the specified data base by reading the data base
+control information into the incore working areas.
+
+
+    CALL RMCLOS
+        -----------
+This routine closes the current data base and copies the
+incore working areas to the logical data base files.  This
+routine is required (if you have modified the data base)
+before your program can access another data base.
+
+3.2  STATUS OF DATA BASE ACTIVITY
+
+When an operation on the data base has been attempted, the
+status of the operation is returned to the application
+program via the RMSTAT variable in the RIMCOM common block.
+This common block must be declared in the calling program as
+follows:
+
+    COMMON /RIMCOM/ RMSTAT
+    INTEGER RMSTAT
+
+The value of RMSTAT should be checked after each operation.
+A non-zero value indicates the operation was not successful.
+ as a result, subsequent operations may not function as
+expected.  The RMSTAT values and meanings are as follows:
+
+   -1  NO MORE DATA AVAILABLE FOR RETRIEVAL
+    0  OK - OPERATION SUCCESSFUL
+   10  DATA BASE FILES DO NOT CONTAIN A RIM DATA BASE
+   11  DATA BASE NAME DOES NOT MATCH FILE CONTENTS
+   12  INCOMPATIBLE DATA BASE FILES (DATE,TIME,ETC)
+   13  DATA BASE IS ATTACHED IN READ ONLY MODE
+   14  DATA BASE IS BEING UPDATED
+   15  DATA BASE FILES ARE NOT LOCAL FILES
+   16  DATA BASE HAS BEEN OPENED
+   20  UNDEFINED RELATION
+   30  UNDEFINED ATTRIBUTE
+   40  MORE THAN 10 AND/OR OPERATORS IN THE WHERE CLAUSE
+   41  ILLEGAL "LIMIT EQ N" CONDITION
+   42  UNRECOGNIZED COMPARISON OPERATOR
+   43  EQS ONLY AVAILABLE FOR TEXT ATTRIBUTES
+   44  ILLEGAL USE OF MIN/MAX IN THE WHERE CLAUSE
+   45  UNRECOGNIZED AN/OR OPERATOR
+   46  COMPARED ATTRIBUTES MUST BE THE SAME TYPE/LENGTH
+   47  LISTS ARE VALID ONLY FOR EQ AND NE
+   50  RMFIND NOT CALLED
+   60  RMGET NOT CALLED
+   70  RELATION REFERENCE NUMBER OUT OF RANGE
+   80  VARIABLE LENGTH ATTRIBUTES MAY NOT BE SORTED
+   81  THE NUMBER OF SORTED ATTRIBUTES IS TOO LARGE
+   89  SORT SYSTEM ERROR
+   90  UNAUTHORIZED RELATION ACCESS
+  100  ILLEGAL VARIABLE LENGTH ROW DEFINITION (LOAD/PUT)
+  110  UNRECOGNIZED RULE RELATIONS
+  111  MORE THAN 10 RULES PER RELATION
+
+
+THE FOLLOWING CODES SHOULD NOT BE ENCOUNTERED IN NORMAL USE
+
+   1001 BUFFER SIZE PROBLEM - BLKCHG,BLKDEF
+   1002 UNDEFINED BLOCK - BLKLOC
+   1003 CANNOT FIND A LARGER B-TREE VALUE - BTADD,PUTDAT
+   1004 CANNOT FIND B-TREE BLOCK - BTPUT
+   21XX RANDOM FILE ERROR XX ON FILE1
+   22XX RANDOM FILE ERROR XX ON FILE2
+   23XX RANDOM FILE ERROR XX ON FILE3
+   24XX RANDOM FILE ERROR XX ON FILE4
+
+3.3  GENERAL ROUTINES
+
+The following routines are used to set the internal switches
+for rule checking, to specify the data base passwords, and
+to set the tolerance for real numbers.  These routines may
+be called any number of times with the new value overwriting
+the current value.
+
+    CALL RMUSER (password)
+        ---------------------
+        Input Parameters:
+
+          password--the password in Hollerith (8H).
+
+This routine is used to provide the password necessary for
+checking data base access, relation read permission and
+relation modify premission.
+
+    CALL RMRULE (switch)
+    -------------------
+
+        Input Parameters:
+
+         switch--- 0 no rule checking (NOCHECK RULES) (int)
+                   1 check rules (CHECK RULES)
+
+This routine turns rule checking on and off (default--on if
+rules are defined).
+
+    CALL RMTOL (val,percent)
+    ------------------------
+
+    Input Parameters:
+
+         val------the value of the tolerance (real)
+         percent--0 if "val" is the absolute tolerance value
+                     (int)
+                  1 if "val" is the tolerance percent
+
+This routine sets the tolerance for floating point numbers,
+(default: 0.).
+
+
+3.4  ACCESSING THE SCHEMA
+
+The following routines are used to obtain information about
+the data base schema.
+
+    CALL RMLREL
+    -----------
+
+This routine sets an implicit pointer (used by the routine
+RMGREL) to the first relation in the data base.  it must be
+called before data about any relations may be obtained.  If
+there are no relations defined for which the current user
+password has read permission, RMSTAT will return 90,
+otherwise 0.
+
+   CALL RMGREL (rname,row,mpw,lastmod,numatt,numrows)
+
+   Output Parameters:
+
+     rname---relation name (8H)
+     rpw-----read password (.TRUE. or .FALSE.)
+     mpw-----modify password (.TRUE. or .FALSE.)
+     lastmod-date of last modification of relation data (8H)
+     numatt--number of attributes in the relation (int)
+     numrows-number of rows of data in the relation (int)
+
+This routine returns the data about the current relation
+(the relation indicated by the current pointers) and the
+increments the implied pointer to point to the next relation
+for which read permission is available.  A successful
+execution of this routine sets RMSTAT equal to 0.  I f you
+change passwords between calls to RMLREL and RMGREL or
+between successive calls to RMGREL, unpredictable results
+may occur.  When the last relation is accessed RMSTAT will
+be set to -1.
+
+The following example shows how to use RMLREL and RMGREL to
+obtain the data about all relations in the data base.
+             .
+             .
+                 .
+    COMMON /RIMCOM/ RMSTAT
+    INTEGER RMSTAT
+             .
+             .
+             .
+    CALL RMOPEN (dbname)
+    CALL RMUSER (password)
+             .
+             .
+             .
+    CALL RMLREL
+    IF (RMSTAT.EQ.0) GO TO 100
+             .
+             .
+                 .
+    print message that no relations are available
+    using the current password
+             .
+             .
+             .
+    GO TO 200
+100 CONTINUE
+    CALL RMGREL(rname,rpw,mpw,lastmod,numatt,numrows)
+             .
+             .
+             .
+    printout the data about the relation, etc..........
+             .
+             .
+             .
+    GO TO 100
+200 CONTINUE
+             .
+             .
+             .
+
+    CALL RMLATT (rname)
+    ------------------
+
+    Input Parameters:
+
+       rname --- relation name (8H)
+
+This routine sets an implied pointer to the first attribute
+of the specified relation.  if the relation exists and the
+current password allows access to relational data, RMSTAT
+will return 0.
+
+    CALL RMGATT(aname,type,matvec,var,len1,len2,column,key)
+    -------------------------------------------------------
+
+    Output Parameters:
+
+       aname---attribute name (8H)
+       type----attribute type (INT,REAL,DOUB,TEXT) (4H)
+       matvec--attribute type (VEC or MAT -otherwise
+               blank)(4H)
+       var-----variable length attribute (.TRUE. or .FALSE.)
+       len1----attribute length data as follows (int):
+               TEXT-number of characters
+               INT,REAL,DOUB,VEC-number of items
+               MAT-row dimension
+       len2----column location in the relation (int)
+               (otherwise 0) (int)
+       column--attribute column location in the relation
+               (int)
+       key-----keyed attribute (.TRUE. or .FALSE.)
+
+This routine returns the data about the current attribute
+(the attribute indicated by the implied pointer) and
+increments the implied pointer to point to the next
+attribute.  When the last attribute is accessed, RMSTAT will
+return -1.
+
+The following example shows the use of RMLREL,RMGREL,RMLATT,
+and RMGATT to obtain the data about all attributes for all
+realtions.  (the equivalent of LISTREL ALL)
+
+            .
+            .
+            .
+     COMMON /RIMCOM/ RMSTAT
+     INTEGER RMSTAT
+            .
+            .
+            .
+     CALL RMOPEN(dbname)
+     CALL RMUSER(password)
+            .
+            .
+            .
+     CALL RMLREL
+100  CONTINUE
+     CALL RMGREL(rname,rpw,mpw,lastmod,numatt,numrows)
+     IF (RMSTAT.NE.0) GO TO 300
+     CALL RMLATT(rname)
+     DO 200 K=1,numatt
+     CALL RMGATT(aname,type,matvec,var,len1,len2,column,key)
+     IF(RMSTAT.NE.0) GO TO 300
+            .
+            .
+            .
+     printout the relation and attribute data, etc..........
+            .
+            .
+            .
+200 CONTINUE
+    GO TO 300
+300 CONTINUE
+            .
+            .
+            .
+
+3.5  ACCESSING THE DATA BASE
+
+The routines which access the data base allow the following
+operations:
+
+1) GET an existing row of data from aspecified relation and
+store it in a local array (must be preceded by a RMFIND).
+
+2) LOAD a new row of data from a local array to the bottom
+of a specified relation (must be preceded by a RMFIND).
+
+3) PUT an existing row of data back into a specified
+relation after it has been modified (must be preceded by a
+RMFIND, RMGET).
+
+4) DELETE an existing row of data from a specified relation
+(must be preceded by a RMFIND, RMGET).
+
+Each of the above operations works on one row of data at a
+time.  RMGET increments the pointers to point to the next
+row.  The initial pointers must be established before the
+required operation can be performed (RMFIND).  The rows
+returned may be qualified with a WHERE clause (default - all
+rows) and the rows may also be returned in a sorted order
+(RMGET only).
+
+To support concurrent access to multiple relation, a
+parameter is provided to allow the assigning of a number to
+identify the set of pointers for a given relation.  In this
+way the operations on the data base are related to a number
+which in turn corresponds to the pointers for a single
+
+Each of the GET, LOAD, PUT, and DELETE operations work on
+one row of data at a time. GET, PUT and DELETE use an
+implied row pointer initialized by RMFIND and incremented
+by RMGET. You have 6 pointers numbered 0-5 at your disposal.
+You may use more than one pointer for a given relation. RMPUT,
+which must be preceded by RMGET, simply puts a row back where
+it was taken from. RMLOAD, while not specifically using the
+pointers from RMFIND, requires a call to RMFIND. In this case
+RMFIND simply identifies the relation. RMLOAD adds rows to the
+relation, not replacing them like RMPUT.
+
+A call toi RMFIND establishes an implied pointer chain to all
+the rows in a relatuion in the internal order of the rows. You may
+restrict the number of rows in the implied pointer chain by a call
+to RMWHER following the RMFIND call. You may also sort the
+rows qualified by the implied pointer chain by calling RMSORT. Thus
+for each pointer you want to use, you must first call RMFIND,
+then possibly RMWHER and/or RMSORT. You must not call RMGET, RMLOAD,
+RMPUT, ro RMDEL between the calls to RMFIND, RMWHER, and RMSORT
+unless a new pointer chain is being established.
+
+If a relation is modified (using RMPUT, RMDEL, and RMLOAD), only
+one pointer should be in effect for the relation. If more than
+one pointer is used, the results are unpredictable.
+
+A pointer may be redefined as many times as desired. Each RMFIND
+call redefines the pointer. The logical sequence of RMFIND, RMWHER
+(optional), RMSORT (optional) calls must be set up prior to
+the first call to RMGET. Note that a new RMWHER or RMSORT call
+requires a new RMFIND call.
+
+   CALL RMFIND (number,relname)
+   ----------------------------
+
+   Input Parameters:
+
+     number---number (0-5) assigns a pointer for the
+              relation (int)
+
+     relname--relation name (8H)
+
+This routine establishes the initial pointer number for a
+relation.  A call to RMFIND must be made before calls to
+RMGET, RMWHER, RMLOAD, and RMSORT.
+
+
+CALL RMWHER (number,attname,operator,value,numval,nextboo,numboo)
+----------------------------------------------------------------
+
+Input Parameters:
+
+  number--number (0-5) identifies the relation pointer for
+          this operation (int)
+  attname-array of attribute names (may also be attribute
+          number, ROWS or LIMIT) where the nth attname
+          corresponds to the nth WHERE clause (Hollerith)
+  operator-array of operators (EQ,GT,EQA,EXIS,FAIL,etc.)
+          where the nth operator corresponds to the nth
+          WHERE clause (each 4H)
+  value---2-dimensional array of (any type, fixed, or
+          variable) where the nth row corresponds to the nth
+          WHERE clause
+
+          The organization of the array is dependent on the
+          of the array is dependent on the attribute type
+          and length.  Let vset represent a list of values
+          (in most cases the list has one in vset (see the
+          SELECT command).  The rows are organized as
+          follows:
+
+          Fixed length attributes--------------------------
+           vset(1),vset(2),......,vset(numval)
+           where numval is equal to the number o f values in
+           the list (note if the EQA condition is used there
+           can only be one member in the vset, see the
+           SELECT command)
+
+          Variable length attributes------------------------
+           TEXT - c(1),0,vset(1),c(2),0,vset(2)............,
+                  c(numval),0,vset(numval)
+                  where c is the number of characters in the
+                  corresponding vset and numval is equal to
+                  the number of values in the list.
+
+          INT,REAL,DOUB,VEC - items(1),0,vset(1),items(2),0,
+          vset(2)....,items(numval),0,vset(numval)
+          where items is the number of items in the
+          corresponding vset and numval is equal to the
+          number of values in the list
+
+          MAT-rows(1),col(1),vset(1),rows(2),col(2),vset(2),
+          ......,rows(numval),col(numval),vset(numval)
+          where rows is the number of rows and cols is the
+          number of columns in the matrix
+
+Note that a call to RMFIND must precede a call to RMWHER.
+
+  numval-number of values in the list of values (vset) where
+         the nth numval corresponds to the nth WHERE clause
+         (int array)
+  nextboo-array of "AND" "OR" operators (each 4H)
+  numboo-number of WHERE conditions (int).
+
+This routine qualifies a set of rows for retrieval (this
+corresponds to the where clause).
+
+For example, if the following WHERE clause were required:
+
+WHERE ATT1 EQ 4 7 12 OR ATT2 EQS "TEXT STRING" AND ATT3 +
+GT 5. AND ATT3 EQA ATT4
+(ATT1 -- integer length 1)
+(ATT2 -- text variable length)
+(ATT3 -- real length 1)
+(ATT4 -- real length 1)
+
+The arrays would contain:
+
+attname(1)   = 8HATT1
+attname(2)   = 8HATT2
+attname(3)   = 8HATT3
+attname(4)   = 8HATT3
+operator(1)  = 4HEQ
+operator(2)  = 4HEQS
+operator(3)  = 4HGT
+operator(4)  = 4HEQA
+value(1,1)   = 4
+value(1,2)   = 7
+value(1,3)   = 12
+value(1,4)   = value(1,5) = 0
+value(2,1)   = 11
+value(2,2)   = 0
+value(2,3)   = 4HTEXT
+value(2,4)   = 4 H STR
+value(2,5)   = 3HING
+value(3,1)   = 5.
+value(3,2)   = value(3,3) = value(3,4) = value(3,5)=0
+value(4,1)   = 4HATT4
+value(4,2)   = value(4,3) = value(4,4) = value(4,5)=0
+numval(1)    = 3
+numval(2)    = 1
+numval(3)    = 1
+numval(4)    = 1
+nextboo(1)   = 4HOR
+nextboo(2)   = 4HAND
+nextboo(3)   = 4HAND
+nextboo(4)   = 0
+numboo       = 4
+
+"Value" would be dimensioned (4,5) in the above example.
+
+
+CALL RMSORT (number,attname,numsort,sortype)
+
+Input Parameters:
+
+   number --- number (0-5) identifies the pointer for the
+              relation sorted (int)
+   attname -- array of "numsort" attribute names to sort
+              on (each 8H)
+   numsort -- number of attributes to sort (int)
+   sortype -- sort control numbers, corresponding to
+              attname LT 0 causes descending sort,
+              GE 0 causes ascending sort (int array)
+
+This routine sorts the data prior to retrieval (this is
+equivalent to the SORTED BY clause).
+
+For example, if the following SORTED BY clause were
+  required:
+
+    SORTED BY ATT1=A ATT2=A ATT3=D
+
+The array would contain:
+
+  attname(1) = 8HATT1
+  attname(2) = 8HATT2
+  attname(3) = 8HATT3
+  sortype(1) = 1
+  sortype(2) = 1
+  sortype(3) = -1
+  numsort  = 3
+
+   CALL RMGET (number,array)
+   ------------------------
+
+   Input Parameters:
+
+     Number --- number (0-5) identifies the relation
+                pointer for this operation (int).
+
+   Output Parameters:
+
+     Array ---  array to receive the row of data (any type).
+                Let "coli" be the column number in the
+                relation for the ith attribute (see RMGATT).
+
+                Fixed length attributes--------------------
+                 Array (coli) contains the start of the
+                 value for the i-th attribute.
+
+                Variable length attributes----------------
+                 Array (coli) contains the pointer "N"
+                 which points to the start of the attribute
+                 data in array.
+
+                Array(N) contains one of the following:
+                TEXT - number of characters
+                INT,REAL,DOUB,VEC - number of items
+                MAT(N+2) ,.....contains attribute values
+
+This routine gets a row of data from the specified relation
+and advances the pointer to the next qualifying row (as
+determined by RMWHER and RMSORT conditions).
+.TEST page 40
+.P
+The following figure illustrates the organization of fixed and variable
+length data in the array. The pointer word, array(p) contains values
+as shown. Word p+1 contains 0 or the column dimension for matrix attribute
+type.
+.LITERAL
+
+        Figure 3.5-1 -- Organization of Array
+
+
+     Fixed    Variable        Fixed             Variable Length   Variable
+   Length=1    Length       Length=2             Attribute         Length
+   Attribute  Attribute   Attribute              Parameters       Attribute
+                        /------^--------\
++--+---------+---------+---------+---------+-+---------+---------+---------+-+
+|  |         |         |         |         |X|         |         |         | |
+>  |    3    |    4    |    5    |    6    |X|    N    |  N+1    |  N+2    | >
+<  |         |         |         |         |X|         |         |         | <
+|  |         |         |         |         |X|         |         |         | |
++--+---------+---------+---------+---------+-+---------+---------+---------+-+
+      VALUE    POINTER   \-------v--------/   /---^---\             VALUE
+                              VALUE           * NO. Chars   0
+                +---+                           (text)
+                | N |                         * NO. Words   0
+                +-+-+                           (Int, Real)
+                  |                           * NO. Items   0
+                  |                             (DOUB, DVEC)
+                  |                           * NO. Items   0
+                  |                             (Ivec, RVEC)
+                  |                           * Row Dimens. Col. Dimens.
+                  |                             (Matrix)    (Matrix)
+                  |                            \--v--/
+                  |                               ^
+                  |                               |
+                  +-------------------------------+
+
+.END LITERAL
+
+   CALL RMLOAD (number,array)
+   -------------------------
+
+   Input Parameters:
+
+     number --- number (0-5) identifies the relation to
+                load (int).
+     array ---- array containing the row of data to load
+                (any type).
+                (see RMGET for a description of array)
+
+RMLOAD will load a row of data into a specified relation. Calls
+to RMLOAD may be repeated, with each row being loaded at the
+bottom of the relation. A call to RMFIND must have preceded
+the RMLOAD call to establish the validity of number by
+associating it with a relation.
+
+This sequence of calls will modify a row of data in a
+specified relation.
+
+    CALL RMGET (number,array)
+    ------------------------
+              .
+              .
+              .
+    CALL RMDEL (number)
+    -------------------
+
+    Input Parameters:
+
+      number --- number (0-5) identifies the relation
+                 from which rows are to be deleted (int).
+
+This sequence of calls will delete a row of data in a
+specified relation.
+
+Calls to RMPUT and RMDEL must be preceded by calls to RMGET
+since neither RMPUT or RMDEL advances the pointer they
+operate on to the next row. The RMPUT call works like that
+for RMDEL; array in this case is included so the call is
+.skip 2
+CALL RMPUT (number, array)
+.skip 1
+.p
+where number is the pointer number 0-5 identifying the
+relation to be modified; the row to be modified is established
+by a call to RMGET prior to the RMPUT call, and
+.p
+array is the array containing the modified row of data.
+.skip 2
+.page
+.TAB STOPS 9,17,25,33,41,49,57,65,73
+.LITERAL
+RIM Handy Reference Card
+
+DEFINING A DATABASE SCHEMA
+    DEFINE dbname
+    OWNER password
+    ATTRIBUTES
+    attname {REAL} [{length}][KEY]
+        INT  VAR
+        TEXT
+        DOUB
+        RVEC
+        IVEC
+        DVEC
+    attname {RMAT}  {row,col} [KEY]
+        IMAT     row,VAR
+        DMAT     VAR,VAR
+    RELATIONS
+    relname WITH attname1 [attname2...]
+    PASSWORDS
+    {READ PASSWORD} FOR {relname} IS password
+    RPW         ALL
+    {MODIFY PASSWORD} FOR {relname} IS password
+    MPW         ALL
+    RULES
+    attname [IN relname]    {EQ} value [{AND}...]
+                 NE      OR
+                 GT
+                 GE
+                 LT
+                 LE
+    attname IN relname  {EQA} attname IN relname [{AND}...]
+                 NEA               OR
+                 GTA
+                 GEA
+                 LTA
+                 LEA
+    END
+
+LOADING A RELATION
+    LOAD relname
+    value1 value2 ... valueN
+    END
+    value: SCALARS val1
+           TEXT "text string"
+           VECTOR (val1, val2, ...)
+           MATRIX(r1c1,r2c1,...),(r1c2,r2c2,...)...)
+
+QUERYING A RELATION
+    SELECT {attname1 [=fid1],attname2[=fid2],...} FROM relname +
+        attnum1 [=fid1],...
+        attname1(i),...
+        attname1(i,j)...
+        ALL
+        [SORTED BY attname1 [={A}],[attname2 [={A}]...]]+
+                       D                D
+        [WHERE ...]
+    TALLY attname [={A}] FROM relname [WHERE...]
+             D
+
+    WHERE CLAUSE:
+
+    WHERE   attname     {EXISTS}        [{AND}...]
+                 FAILS            OR
+                 EQS    value
+                 EQ {value}
+                 NE  MAX
+                 GT  MIN
+                 LT
+                 LE
+                 GE
+
+    WHERE   attname     {EQA}   attname     [{AND}...]
+                 NEA              OR
+                 GTA
+                 GEA
+                 LTA
+                 LEA
+
+    WHERE   ROWS        {EQ}    rownumber   [{AND}...]
+                 NE           OR
+                 LT
+                 LE
+                 GE
+                 GT
+
+    WHERE   {attname}   {EQ}    list        [{AND}...]
+         ROWS        NE           OR
+
+    WHERE   LIMIT       EQ  number      [{AND}...]
+                              OR
+...
+
+QUERYING THE SCHEMA
+
+    LISTREL [relname]
+         ALL
+    EXHIBIT attname1 [attname2...]
+    PRINT RULES
+
+COMPUTATION COMMAND
+
+    COMPUTE {COUNT} attname FROM relname [WHERE...]
+         MIN
+         MAX
+         AVE
+         SUM
+
+MODIFICATION COMMANDS
+
+    CHANGE {attname} TO value [IN relname] WHERE ...
+        attname(i)
+        attname(i,j)
+    CHANGE {RPW} TO newpass FOR relname
+        MPW
+    CHANGE OWNER TO newowner
+    DELETE ROWS FROM relname WHERE ...
+    DELETE DUPLICATES [attname1,attname2,...] FROM relname
+    DELETE RULE rulenumber
+    RENAME ATTRIBUTE attname TO newname [IN relname]
+    RENAME RELATION relname TO newname
+    REMOVE relname
+
+RELATIONAL ALGEBRA COMMANDS
+
+    INTERSECT relname1 WITH relname2 FORMING relname3 +
+        [USING attname1 [attname2,...]]
+    JOIN relname1 Using attname1 WITH relname2 USING attname2 +
+        FORMING relname3 [WHERE {EQ}]
+                     NE
+                     GT
+                     GE
+                     LT
+                     LE
+    SUBTRACT relname1 FROM relname2 FORMING relname3 +
+        [USING attname1 [attname2,...]]
+    PROJECT relname1 FROM relname2 USING +
+        {attname1,[attname2,...]} [WHERE ...]
+         ALL
+
+REPORT COMMANDS
+
+    NEWPAGE
+    BLANK n
+    TITLE "title"
+    DATE
+    LINES n
+    WIDTH n
+
+KEY COMMANDS
+
+    BUILD KEY FOR attname IN relname
+    DELETE KEY FOR attname IN relname
+
+RIM-TO-RIM COMMAND
+
+    UNLOAD [dbname [=newdbname]]   {SCHEMA} [relname1 [=mpw] +
+                    DATA
+                    ALL
+        [relname2 [=mpw],...]
+
+GENERAL COMMANDS
+
+    INPUT {filename}
+           TERMINAL
+    OUTPUT {filename}
+           TERMINAL
+    EXIT
+    QUIT
+    MENU
+    HELP [command name]
+    USER password
+    ECHO
+    NOECHO
+    CHECK
+    NOCHECK
+    TOLERANCE xx.xx [PERCENT]
+    RELOAD
+    CLOSE
+
+HOST DEPENDENT COMMANDS (note: may be CDC syntax)
+
+    OPEN dbname [=filename],[UN=account],[PW=password],+
+        [DIRECT={R}]
+             W
+    ZIP "jet statement"
+.END LITERAL
+.PAGE
+.C
+Summary of the Application Program Interface
+.LITERAL
+INITIALIZING THE DATA BASE
+  CALL RMOPEN (dbname)
+    Input parameter:
+        dbname -- the name of the data base in Hollerith format
+  CALL RMCLOS
+
+GENERAL ROUTINES
+  CALL RMUSER (password)
+    Input parameters:
+        password -- the password text
+  CALL RMRULE (switch)
+    Input parameters:
+        switch -- 0 - no rule checking (Nocheck)
+              1 - check rules (CHECK)
+  CALL RMTOL (value,switch)
+    Input parameters:
+        value -- the value of the tolerance (real)
+        switch - 0 if "val" is tolerance value (int)
+             1 if "val" is tolerance percent
+ACCESSING THE SCHEMA
+  CALL RMLREL
+  CALL RMGREL(rname,rpw,mpw,lastmod,numatt,numrows)
+    Output parameters:
+     rname - relation name (text)
+     rpw     read password, .TRUE. or .FALSE.
+     mpw     modify password, .TRUE. or .FALSE.
+     lastmod date of last modification in relation data in
+        yy/mm/dd format
+     numatt  number of attributes in relation (int)
+     numrows number rows of data in relation (int)
+  CALL RMLATT(rname)
+    Input parameters:
+     rname - relation name in hollerith (text) format
+  CALL RMGATT(aname,type,matvec,var,len1,len2,column,key)
+    Output parameters:
+     aname - attribute name
+     type - attribute type (INT, REAL, DOUB, or TEXT)
+     matvec- attribute type (VEC or MAT, else blank)
+     var    variable length attribute, .TRUE. or .FALSE.
+     len1 - attribute length data as follows (int):
+        TEXT - number of characters
+        INT, REAL, DOUB, VEC - number of items
+        MAT - row dimension
+    len2 - Column dimension of MAT attributes, otherwise 0 (int)
+    column- attribute column location in relation (int)
+    key -   keyed attribute (.TRUE. or .FALSE.)
+
+ACCESSING THE DATA BASE
+  CALL RMFIND(number,relname)
+    Input parameters:
+      number - user assigned number (0-5) used to reference the
+            pointer for the relation (int)
+      relname- relation name (characters, H format)
+  CALL RMWHER(number,attname,operator,value,numval,nextboo,numboo)
+    Input parameters:
+      number - number (0-5) which identifies the relation pointer
+        for this operation (int)
+      attname - array of attribute names, attribute numbers, the
+        keyword ROWS, or LIMIT
+      operator - array of operators (EQ, GT, EQS, EQA, etc.)
+      value -  2 dimensional array of WHERE clause "values"
+      numval - Number of "values" in list of values
+      nextboo - array of "AND" "OR" operators
+      numboo - Number of WHERE conditions (int)
+
+  CALL RMSORT(number,attname,numsort,sortype)
+    Input parameters:
+      number - number (0-5) which identifies the relation pointer
+        for this operation (int)
+      attname - array of "numsort" attribute names to sort on
+      numsort - number of attributes to sort on (int)
+      sortype - sort control numbers: -1 = descending sort,
+            +1 = ascending sort.
+  CALL RMGET(number,array)
+    Input parameters:
+      number - number (0-5) which identifies the relation pointer
+        for this operation (int)
+    OUTPUT Parameters:
+      array - array to receive the row of data
+
+  CALL RMLOAD(number,array)
+    Input parameters:
+      number - number (0-5) which identifies the relation pointer
+        for this operation (int)
+      array- array containing the row of data to load
+
+  CALL RMPUT(number,array)
+    Input parameters:
+      number - number (0-5) which identifies the relation pointer
+        for this operation (int)
+      array - array containing the modified row of data.
+
+  CALL RMDEL (number)
+    Input parameters:
+      number - number (0-5) which identifies the relation pointer
+        to be deleted. (int)
+
+.END LITERAL
+
+
+
+  The following is a small sample program in VAX Fortran to show how
+RIM may access the AERODB data base. It prints the following:
+
+1. All information about the schema (LISTREL ALL)
+
+2. The data in the relation REL300 sorted for the airports in
+Brazil sorted by descending altitude. CITYNAME is variable length
+and the commands are SELECT ALL FROM REL300 SORTED BY ALTITUDE=D
+WHERE CITYNAME EQS "BRAZIL".
+
+.LITERAL
+    LOGICAL RPW,MPW,VAR,KEY
+    COMMON/RIMCOM/RMSTAT
+    INTEGER RMSTAT
+    REAL*8 NAME,LASTMD,NAMEA,NAMEC,IVAR,DB,NAME
+    DIMENSION NVAL(20)
+    DIMENSION NAMEQS(5)
+C OPEN THE DATA BASE
+    DBNAME=6HAERODB
+    CALL RMOPEN(DBNAME)
+C LISTREL ALL
+    CALL RMLREL
+100 CONTINUE
+    CALL RMGREL(NAME,RPW,MPW,LASTMD,NUMATT,NUMROW)
+    IF(RMSTAT.NE.0)GOTO 200
+    LRP=3HNO
+    IF(RPW) LRP=3HYES
+    MRP=3HNO
+    IF(MPW)MRP=3HYES
+    WRITE(6,110)NAME,LRP,MRP,LASTMD,NUMATT,NUMROW
+110 FORMAT(1X,A8,2(1X,A4),1X,A8,2I8)
+    CALL RMLATT(NAME)
+120 CONTINUE
+    CALL RMGATT(NAMEA,ITYPE,MAT,VAR,LEN1,LEN2,NCOL,KEY)
+    IF(RMSTAT.NE.0)GOTO 100
+    IVAR=5HFIXED
+    IF(VAR)IVAR=8HVARIABLE
+    IKEY=2HNO
+    IF(KEY)IKEY=3HYES
+    WRITE(6,130)NAMEA,ITYPE,MAT,IVAR,LEN1,LEN2,NCOL,IKEY)
+130 FORMAT(1X,A8,2(1X,A5),1X,A8,3I8,1X,A3)
+    GOTO 120
+200 CONTINUE
+C SELECT ALL FROM REL300 SORTED BY ALTITUDE=D+
+C  WHERE CITYNAME EQS "BRAZIL"
+    NAME=6HREL300
+    CALL RMFIND(1,NAME)
+    IF(RMSTAT.NE.0)GOTO 999
+    NAMEQS(1)=6
+    NAMEQS(2)=0
+    NAMEQS(3)=4HBRAZ
+    NAMEQS(4)=2HIL
+    NAMEC=8HCITYNAME
+    IBOOOP=3HEQS
+    CALL RMWHER(1,NAMEC,IBOOOP,NAMEQS,1,0,1)
+    IF(RMSTAT.NE.0)GOTO 500
+    NAMEA=8HALTITUDE
+    CALL RMSORT(1,NAMEA,1,-1)
+    IF(RMSTAT.NE.0)GOTO 999
+300 CONTINUE
+    CALL RMGET(1,NVAL)
+    IF(RMSTAT.NE.0)GOTO 500
+    NUMX=(NVAL(5)-1)/10+1
+    NUMP=6+NUMX
+    WRITE(6,400)(NVAL(K),K=1,NUMP)
+400 FORMAT(A4,5I6,2X,30A1)
+    GOTO 300
+500 CONTINUE
+    IF(RMSTAT.LT.0)GOTO 1000
+999 CONTINUE
+    WRITE(6,9001)RMSTAT
+9001    FORMAT(' RMSTAT:',I5)
+C CLOSE THE DATA BASE
+1000    CONTINUE
+    CALL RMCLOS
+    STOP
+    END
+.END LITERAL
+
+
+                 LIMITATIONS
+
+  There is no limit on the number of rows of a relation except disk size.
+
+  A row in a relation must fit in 1021 words. If len(i) is the fixed length
+(in words) of the ith attribute and var(j) is the length (in words) of
+the jth variable length attribute, then
+SUM(len(i) for i=1 to max)+sum((var(j)+3) for j=1 to max) must be less
+than 1021. This can mean that relations that fit on 60 bit
+machines may not fit on 32 bit machines.
+
+  A relation or attribute name must not begin with the character string
+"RMRUL".
+
+  The following words may not be used in attribute or relation names:
+TO, FROM, BY, USING, WHERE, IN, FORMING, ROWS, LIMIT, DUPLICATE.
+Also, names must not be a substring of the above
+which is 3 characters or more long starting with the first
+character. Thus FOR and FORM are illegal, however FORT is OK.
+
+  In loading data, the value of the first attribute, if it is text,
+is limited as follows:
+If the relation contains only 1 or 2 attributes, then the following
+text strings and their RIM substrings are not allowed as values for
+the first attribute:
+CHECK, NOCHECK, ECHO, NOECHO, END, HELP, INPUT, OUTPUT, QUIT.
+If the relation contains three attributes then the value for the
+first attribute may not be HELP or HEL.
+
+The number of items in one command may not exceed 100.
+
+The number of rules specified for one relation may not exceed 10.
+
+The number of conditions used in the SELECT WHERE clause may not
+exceed 10.
+
+
+
+            Entering Input with the RIM User Interface
+
+The following discusses the reading and parsing of commands and
+data in the standalone system.
+
+The RIM user interface is a free-field input routine used by the RIM
+standalone system which separates user input into items which are
+grouped into records.
+
+
+                        Terminology
+.LIST
+.LE; LINE - One line of information with a maximum of 80 characters
+including blanks.
+.LE; ITEM - One piece of information. An item may be a real number,
+an integer or text. Items are delimited by blanks or commas. Multiple
+blanks count as a single blank. Multiple commas generate null items.
+.LE; RECORD - A collection or list of up to 100 items entered in
+response to a single request for data by the calling program.
+.LE; INTEGER - all characters must be numeric except that the first
+may be a + or - sign. For example: -1 23 +10000
+.LE; REAL - An item of the form I1.I2EI3 where I1 and I3 may be
+signed integers and I2 is an unsigned integer. The entire form is
+not necessary but at least one digit and the . or two digits
+separated by the E are required.
+.LE; TEXT - Any single item that is not integer or real. If a text
+item looks like an integer or real it must be enclosed in quotes (").
+.END LIST
+
+                    Composing Records
+
+Ordinarily records consist of one line. However multiple records may be put
+on a line by separating them with dollars or semicolons. Alternatively,
+a record may span several lines by ending all but the last line with a
+plus. Items must be wholly contained on one line with the exception of
+quoted text items and comments.
+
+                    Special Items - +,(, )
+
+Equals and left and right parentheses are treated as single items
+unless enclosed in quoted text items. Thus a=3. is 3 items, two
+text and one real rather than one. "a=3." is one item.
+
+                    Multiple Commas
+
+If more than one comma separates 2 items, each additional comma
+will generate a text item with 3 characters, "-0-".
+
+                   Rules for Text Items
+
+A quoted text item is terminated by a record separator (dollar
+or semicolon). Quoted text items may be continued on multiple
+lines. If the trailing quote is omitted on the last item in a
+record, the quoted item is terminated at the record separator, if
+any, or the last nonblank character on the line. Quotes may be included
+in quoted text strings by doubling the quotes (e.g., "a,""b"
+yields a,"b as a text string). The total number of characters for all
+text strings in a record is limited to 2000.
+
+                     Comments
+
+Comments may be included anywhere in the input stream by enclosing them
+between *( and ). For example *( this is a comment). Comments are
+completely ignored by the user interface. Empty lines between records
+are ignored and may be used to paragraph input. An alternative form
+of comment is */ ... / which may be used if you need to have parentheses
+inside the comment.
+
+                      DATA GENERATION
+
+Activities such as entering large volumes of data can be eased by
+using the data generation facilities.
+
+REPEATING ITEMS ON PREVIOUS RECORD
+
+A data item of the form *n where n is an unsigned integer, indicates
+that the next n items are identical to the corresponding n items in
+the previous record.
+An isolated * is taken as *1. Double asterisks (**) indicate
+that the remaining items in the previous record are to be copied
+to the current record.
+
+REPEATING AN ITEM IN THE CURRENT RECORD - *=N, *=N+STEP
+
+An item of the form *=n, where n is an unsigned integer, indicates
+that the next n items are identical to the immediately preceding
+item. An item of the form *=n+step or *=n-step, where step is an
+unsigned real or integer, indicates that the next n items are to
+be generated by consecutively incrementing the immediately preceding
+item.
+
+GENERATING MULTIPLE RECORDS *+N
+
+A record beginning with *+n where n is an unsigned integer indicates
+that the next n records are to be generated from the preceding
+record. Each item of the generated record is formed by adding an
+item of the *+n record to the corresponding item of the immediately
+preceding record. A zero (integer) item should be inserted
+in an *+n record for text items in the preceding record. The number of
+items after the *+n must match the number in the preceding record.
+
+
+                   Notes on Generating Items
+
+When increments are specified, either on the *+n record or as
+step on an *=n+step item they must match the item thye are
+incrementing in type. It should be noted that the *+n record
+generation optuion is based on the expanded representation of
+the previous record. The generation does not operate on the card
+image of the preceding record if it contains data generation items.
+Therefore it is not possible to repeat or increment an asterisk-type
+item.
+
+
+                      Examples
+
+Consider the following 7 input records to illustrate data generation
+features:
+.Literal
+
+1 2 3 4 5 6 7 8 9 10 11 12
+2 1 *2 4 *=2 1 *=2+2 **
+*+1 0 *=3 0 *=5 **
+*+1 0 *=11
+*+1 *12
+*+1 **
+**
+.end literal
+
+Twelve data items are defined by each of these records. Each of the
+last six records is translated into the same internal record which
+is: 2#1#3#4#4#4#4#1#3#5#11#12
+
+Note - the last 5 records could be replaced by the single record
+*+5 **
+instead.
+
+
+
+                   Changing Special Characters
+
+It is possible to change the special characters the user interface
+uses to break apart records. These special characters may either be
+changed to others or set to null so they are ignored. This is useful
+for reading specially formatted files or to allow special characters
+to appear as input in text items. To change special characters enter
+the following special comment as the only entry on a line between
+records:
+
+*(SET KEYWORD=newvalue)
+
+where KEYWORD can be DOLLAR, SEMI, QUOTES, BLANK, PLUS, or COMMA
+and newvalue is either the word NULL or the new special character.
+For example if one wanted to use dollar to delimit items rather
+than records and not to have commas delimit items one would enter:
+
+*(SET DOLLAR=NULL)
+*(SET COMMA=$)
+
+ and commas could now be used in unquoted text strings. Note the function
+is altered, so for example the + sign still has its usual function
+in real numbers. To restore the original delimiters one could say:
+
+*(SET DOLLAR=$)
+*(SET COMMA=,)
+
