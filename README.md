@@ -20,7 +20,7 @@ mainframe. UWRIM was later rewritten in FORTRAN 77 and ported to UNIX, while
 the command language has been extended to be more like SQL.
 
 The source code was last updated by Marco Valagussa and Jacques Bouchard in
-1998, who added corrections and compatibility with AIX, BSD4.3, VAX/VMS, SunOS,
+1998, who added corrections and compatibility with AIX, 4.3BSD, VAX/VMS, SunOS,
 and Linux.
 
 ## Features
@@ -53,7 +53,7 @@ Use [f2c](https://www.netlib.org/f2c/) and an appropriate C compiler (`clang`,
 compatible with modern GNU make and BSD make. On FreeBSD, run:
 
 ```
-$ cp LINU-DGUX/*.[cdf] src/
+$ cp LINUX-DGUX/*.[cdf] src/
 $ cd src/
 $ make
 ```
@@ -61,7 +61,7 @@ $ make
 On Linux, add the make argument `PREFIX=/usr`.
 
 The compilation outputs the programs `rim`, `rime`, and `rimh`, as well as the
-static library `librim.a`:
+static library `librim.a`.
 
 ## Documentation
 The “RIM Installers Manual” (`rimint.pdf`) and the “RIM Users Manual”
@@ -198,7 +198,8 @@ Rim: select * from techs sort by position
          3 rows selected.
 ```
 
-Furthermore, specific rows can be selected adding a `where` clause:
+Furthermore, specific rows can be selected by adding a `where` clause. The label
+of the column is given with the `%` operator:
 
 ```
 Rim: select name%'Tech Name' from techs where id < 30
@@ -210,15 +211,14 @@ Rim: select name%'Tech Name' from techs where id < 30
          2 rows selected.
 ```
 
-The label of the column is given with the `%` operator. The `delete` command
-removes rows from a table:
+The `delete` command removes rows from a table:
 
 ```
 Rim: delete rows from techs where id = 5
         1 rows were deleted.
 ```
 
-We can close the database with `close` and quit the RIM program with `exit`.
+Close the database with `close` and quit the RIM program with `exit`.
 
 ## FORTRAN 77
 The example program `example.f` uses the database schema `sample` that was
@@ -229,8 +229,7 @@ C     *****************************************************************
 C     FORTRAN 77 EXAMPLE PROGRAM FOR RIM DATABASE ACCESS.
 C     *****************************************************************
       PROGRAM MAIN
-      EXTERNAL ERROR
-      EXTERNAL STRASC
+      EXTERNAL ERROR, STRASC
       LOGICAL  RIM, RIMDM
       CHARACTER*16 STRING
       INTEGER      TUPLE(32)
@@ -245,7 +244,7 @@ C     *****************************************************************
       IF (.NOT. RIM(1, 'select from techs sort by name'))
      &  CALL ERROR(RMSTAT)
 
-      PRINT *, 'Names:'
+      PRINT *, 'NAMES:'
    10 IF (RIMDM(1, 'GET', TUPLE)) THEN
         CALL STRASC(STRING, TUPLE(8), 16)
         PRINT *, STRING
@@ -270,13 +269,14 @@ $ cc -I/usr/local/include/ -L/usr/local/lib/ \
   -o example example.c librim.a /usr/local/lib/libf2c.a -lm -lf2c
 ```
 
-Then, simply run:
+Make sure that the RIM database files `sample.rimdb1`, `sample.rimdb2`, and
+`sample.rimdb3` are in the same directory as the executable. Then, simply run:
 
 ```
 $ ./example
  FORTRAN 77 INTERFACE TO RIM
  ***************************
- Names:
+ NAMES:
  Alice Jones
  Carol Smith
  Heidi Jackson
@@ -284,10 +284,10 @@ $ ./example
 
 ## References
 
-  * Biser, A. O.: A Method for Data Base Management and Analysis for Wind-Tunnel Data. NASA Technical Memorandum 89038, 1987
-  * Comfort, D. L.; Erikson, W. J.: RIM: A Prototype for a Relational Information Management System. In: NASA Conference Publication 2055. Engineering and Scientific Data Management. Proc. of Conf. held at Hampton, Va., 18 – 19 May 1978
+  * Biser, A. O.: [A Method for Data Base Management and Analysis for Wind-Tunnel Data](https://ntrs.nasa.gov/search.jsp?R=19870008898). NASA Technical Memorandum 89038, 1987
+  * Comfort, D. L.; Erikson, W. J.: RIM: A Prototype for a Relational Information Management System. In: [NASA Conference Publication 2055. Engineering and Scientific Data Management](https://ntrs.nasa.gov/search.jsp?R=19780025833). Proc. of Conf. held at Hampton, Va., 18 – 19 May 1978
   * Fox, J.: RIM Users Manual. University Computing Services, University of Washington, 1990
-  * Johnson, H. R.; Bernhardt, D. L.: Engineering Data Management Activities Within the IPAD Project. In: Bulletin of the Technical Committee on Data Engineering, Vol. 5, No. 2. IEEE Computer Society, June 1982
+  * Johnson, H. R.; Bernhardt, D. L.: Engineering Data Management Activities Within the IPAD Project. In: [Bulletin of the Technical Committee on Data Engineering, Vol. 5, No. 2](http://sites.computer.org/debull/82JUN-CD.pdf). IEEE Computer Society, June 1982
 
 ## Licence
 Public Domain
