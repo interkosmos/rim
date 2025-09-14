@@ -2,7 +2,7 @@ This is Rim documentation in LaTeX format.
  
 rimref.tex        source to user reference
 rimint.tex        source to internals document
-ACSman.sty        style file
+UCSman.sty        style file
  
 rim_words         list of rim keywords for spelling checker
 rimhlist          hash list to use with rim documents
